@@ -1,0 +1,16 @@
+autom4te.cache/*
+aclocal.m4
+bin/*
+Makefile
+Makefile.in
+missing
+config.status
+depcomp
+configure
+install-sh
+*.o
+*.Po
+*/*.Po
+src/.deps/*
+src/ncf
+config.log
