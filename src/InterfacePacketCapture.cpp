@@ -44,16 +44,15 @@ void InterfacePacketCapture::Init()
 	}
 
 	// Set the packet capture buffer size
-	/*
-	if(pcap_set_buffer_size(m_handle, Config::Inst()->GetCaptureBufferSize()) != 0)
+	if(pcap_set_buffer_size(m_handle, 1048576))
 	{
 		throw PacketCaptureException(string("Unable to set pcap capture buffer size due to error: ") + pcap_geterr(m_handle));
 	}
-	*/
+
 
 	//Set a capture length of 1Kb. Should be more than enough to get the packet headers
 	// 88 == Ethernet header (14 bytes) + max IP header size (60 bytes)  + 4 bytes to extract the destination port for udp and tcp packets
-	if(pcap_set_snaplen(m_handle, 88) != 0)
+	if(pcap_set_snaplen(m_handle, 1024) != 0)
 	{
 		throw PacketCaptureException(string("Unable to set pcap capture length due to error: ") + pcap_geterr(m_handle));
 	}
