@@ -5,16 +5,11 @@
 
 #include "InterfacePacketCapture.h"
 #include "ArpFingerprint.h"
+#include "Config.h"
 
 using namespace std;
 using namespace Nova;
 
-/* TODO: These all need to be configurable as CLI options. Just defined here for the initial prototype */
-#define INTERFACE "eth0"
-#define SOURCE_IP "192.168.0.42"
-#define DESTINATION_IP "192.168.0.100"
-#define SOURCE_MAC {0xa8, 0x39, 0x44, 0x44, 0x55, 0x66}
-#define DESTINATION_MAC {0x38, 0x60, 0x77, 0x20, 0xCC, 0x50}
 
 // TOOD: Might want to move state data out of the fingerprint and into per test structs of some sort
 ArpFingerprint fingerprint;
@@ -27,7 +22,6 @@ pthread_mutex_t probeBufferLock;
 /* This indicates that we've seen the probe packet that we sent and can wait for replies */
 bool seenProbe = false;
 
-addr probeDstMac, probeDstIp, probeSrcMac, probeSrcIp;
 timeval lastARPReply; /* Used to compute the time between ARP requests */
 
 void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, const unsigned char *packet)
@@ -64,9 +58,9 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 			addr_pack(&addr, ADDR_TYPE_IP, IP_ADDR_BITS, arpRequest->ar_tpa, IP_ADDR_LEN);
 			cout << "Got request for IP " << addr_ntoa(&addr) << endl;
 
-			if (addr_cmp(&addr, &probeSrcIp) == 0)
+			if (addr_cmp(&addr, &CI->m_srcip) == 0)
 			{
-				if (addr_cmp(&dstMac, &probeSrcMac) == 0)
+				if (addr_cmp(&dstMac, &CI->m_srcmac) == 0)
 				{
 					fingerprint.unicastRequest = true;
 				}
@@ -128,7 +122,7 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 			addr dstIp;
 			addr_pack(&dstIp, ADDR_TYPE_IP, IP_ADDR_BITS, &ip->ip_dst, IP_ADDR_LEN);
 
-			if (addr_cmp(&dstIp, &probeDstIp) == 0 && addr_cmp(&dstMac, &probeDstMac))
+			if (addr_cmp(&dstIp, &CI->m_dstip) == 0 && addr_cmp(&dstMac, &CI->m_dstmac))
 			{
 				fingerprint.sawResponse = true;
 				if (fingerprint.arpRequests == 0)
@@ -153,7 +147,7 @@ void SendSYN(
 	ip_checksum(probeBuffer + ETH_HDR_LEN, probeBufferSize - ETH_HDR_LEN);
 	pthread_mutex_unlock(&probeBufferLock);
 
-	eth_t *eth = eth_open(INTERFACE);
+	eth_t *eth = eth_open(CI->m_interface.c_str());
 	if (eth == NULL)
 	{
 		cout << "Unable to open ethernet interface to send TCP SYN" << endl;
@@ -164,32 +158,26 @@ void SendSYN(
 	eth_close(eth);
 }
 
-int main()
+int main(int argc, char ** argv)
 {
+	Config::Inst()->LoadArgs(argv, argc);
+	
+
 	pthread_mutex_init(&probeBufferLock, NULL);
 
-	unsigned char dstEthData[ETH_ADDR_LEN] = DESTINATION_MAC;
-	addr_pack(&probeDstMac, ADDR_TYPE_ETH, ETH_ADDR_BITS, dstEthData, ETH_ADDR_LEN);
 
-	unsigned char srcEthData[ETH_ADDR_LEN] = SOURCE_MAC;
-	addr_pack(&probeSrcMac, ADDR_TYPE_ETH, ETH_ADDR_BITS, srcEthData, ETH_ADDR_LEN);
-
-	addr_pton(DESTINATION_IP, &probeDstIp);
-	addr_pton(SOURCE_IP, &probeSrcIp);
-
-
-	InterfacePacketCapture *capture = new InterfacePacketCapture(INTERFACE);
+	InterfacePacketCapture *capture = new InterfacePacketCapture(CI->m_interface);
 	capture->Init();
 	capture->SetPacketCb(&packetCallback);
 
 	stringstream ss;
-	ss << "arp or (dst host " << SOURCE_IP << ")";
+	ss << "arp or (dst host " << CI->m_srcipString << ")";
 	capture->SetFilter(ss.str());
 
 	capture->StartCapture();
 	sleep(1);
 
-	SendSYN(probeDstIp, probeDstMac, probeSrcIp, probeSrcMac, 42, 54629);
+	SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, CI->m_srcmac, 42, 54629);
 
 	// TODO: Make a timeout for the test. Shouldn't monitor forever.
 	while (1)
