@@ -87,7 +87,6 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 					fingerprint.averageTimeBetweenRequests = sum / (fingerprint.arpRequests - 1);
 
 
-					cout << fingerprint.toString() << endl << endl;
 				}
 				lastARPReply = pkthdr->ts;
 			}
@@ -175,16 +174,15 @@ int main(int argc, char ** argv)
 	capture->SetFilter(ss.str());
 
 	capture->StartCapture();
+
+	// Wait a bit for the capture thread to get going
 	sleep(1);
 
 	SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, CI->m_srcmac, 42, 54629);
 
-	// TODO: Make a timeout for the test. Shouldn't monitor forever.
-	while (1)
-	{
-		sleep(9999);
-	}
-
+	// TODO: 6 seconds should probably be an option. Will figure out timing configuration once more tests written
+	sleep(6);
+	cout << fingerprint.toString() << endl << endl;
 
 	return 0;
 }

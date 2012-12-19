@@ -24,8 +24,6 @@ Config* Config::Inst() {
 
 void Config::LoadArgs(char ** &argv, int &argc)
 {
-	cout << "Called loadArgs" << endl;
-
 	po::options_description desc("Allowed options");
 	try {
 		desc.add_options()
@@ -99,8 +97,6 @@ void Config::LoadArgs(char ** &argv, int &argc)
 			
 			addr_pack(&m_dstmac, ADDR_TYPE_ETH, ETH_ADDR_BITS, dstMac, ETH_ADDR_LEN);
 		}
-
-		cout << "Done now " << endl;
 
 	} catch(exception &e)
 	{
