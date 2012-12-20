@@ -7,6 +7,7 @@
 #include "ArpFingerprint.h"
 #include "Config.h"
 #include "Probes.h"
+#include "helpers.h"
 
 using namespace std;
 using namespace Nova;
@@ -29,16 +30,14 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 		return;
 
 	eth_hdr *eth = (eth_hdr*)packet;
-	addr dstMac;
-	addr_pack(&dstMac, ADDR_TYPE_ETH, ETH_ADDR_BITS, &eth->eth_dst, ETH_ADDR_LEN);
+	addr dstMac, srcMac, broadcastMAC;
 
-	addr srcMac;
-	addr_pack(&srcMac, ADDR_TYPE_ETH, ETH_ADDR_BITS, &eth->eth_src, ETH_ADDR_LEN);
+	addr_pack_eth(&dstMac, (uint8_t*)&eth->eth_dst);
+	addr_pack_eth(&srcMac, (uint8_t*)&eth->eth_src);
 
 	/* Stuff the broadcast MAC in an addr type for comparison later */
-	addr broadcastMAC;
 	unsigned char broadcastBuffer[ETH_ADDR_LEN] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-	addr_pack(&broadcastMAC, ADDR_TYPE_ETH, ETH_ADDR_BITS, broadcastBuffer, ETH_ADDR_LEN);
+	addr_pack_eth(&broadcastMAC, (uint8_t*)broadcastBuffer);
 
 	if (ntohs(eth->eth_type) == ETH_TYPE_ARP)
 	{
@@ -57,7 +56,8 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 
 			arp_ethip *arpRequest = (arp_ethip*)(packet + ETH_HDR_LEN + ARP_HDR_LEN);
 			addr addr;
-			addr_pack(&addr, ADDR_TYPE_IP, IP_ADDR_BITS, arpRequest->ar_tpa, IP_ADDR_LEN);
+			addr_pack_ip(&addr, arpRequest->ar_tpa);
+
 
 			if (addr_cmp(&addr, &CI->m_srcip) == 0)
 			{
@@ -122,7 +122,7 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 		else
 		{
 			addr dstIp;
-			addr_pack(&dstIp, ADDR_TYPE_IP, IP_ADDR_BITS, &ip->ip_dst, IP_ADDR_LEN);
+			addr_pack_ip(&dstIp, (uint8_t*)&ip->ip_dst);
 
 			if (addr_cmp(&dstIp, &CI->m_dstip) == 0 && addr_cmp(&dstMac, &CI->m_dstmac))
 			{
@@ -141,9 +141,6 @@ int main(int argc, char ** argv)
 {
 	Config::Inst()->LoadArgs(argv, argc);
 	
-
-
-
 	InterfacePacketCapture *capture = new InterfacePacketCapture(CI->m_interface);
 	capture->Init();
 	capture->SetPacketCb(&packetCallback);
