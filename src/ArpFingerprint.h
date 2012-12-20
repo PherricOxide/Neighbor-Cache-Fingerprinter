@@ -16,8 +16,7 @@ struct ArpFingerprint
 	/* TODO: Handle the case where we got some combination of both? */
 	bool unicastRequest;
 
-	/* Saw a TCP response even though we didn't reply with ARP */
-	bool sawResponse;
+	bool sawTCPResponse;
 
 	/* Number of attempts to resolve the ARP address */
 	int arpRequests;
@@ -29,7 +28,7 @@ struct ArpFingerprint
 	ArpFingerprint()
 	{
 		arpRequests = 0;
-		sawResponse = false;
+		sawTCPResponse = false;
 		averageTimeBetweenRequests = -1;
 
 		for (int i = 0; i < 10; i++)
@@ -39,16 +38,25 @@ struct ArpFingerprint
 	std::string toString()
 	{
 		std::stringstream ss;
-		ss << "Saw TCP response when no ARP reply         : " << std::boolalpha << sawResponse << std::endl;
+		ss << "Number of ARP Requests Seen			      : " << arpRequests << std::endl;
+		ss << "Saw TCP response 						  : " << std::boolalpha << sawTCPResponse << std::endl;
 		ss << "Replied before ARP request                 : " << std::boolalpha << replyBeforeARP << std::endl;
-		ss << "Send unicast ARP request                   : " << std::boolalpha << unicastRequest << std::endl;
-		ss << "Number of ARP Requests before giving up    : " << arpRequests << std::endl;
-		ss << "Average time between each request (ms)     : " << averageTimeBetweenRequests << std::endl;
 
-		ss << "Time between ARP attempts                  : ";
-		for (int i = 0; i < arpRequests - 1; i++)
-			ss << timeBetweenRequests[i] << " ";
-		ss << std::endl;
+		if (arpRequests > 0)
+		{
+			ss << "Got unicast instead of bcast ARP request   : " << std::boolalpha << unicastRequest << std::endl;
+
+		}
+
+		if (arpRequests > 1)
+		{
+			ss << "Average time between each request (ms)     : " << averageTimeBetweenRequests << std::endl;
+
+			ss << "Time between ARP attempts                  : ";
+			for (int i = 0; i < arpRequests - 1; i++)
+				ss << timeBetweenRequests[i] << " ";
+			ss << std::endl;
+		}
 
 		return ss.str();
 	}
