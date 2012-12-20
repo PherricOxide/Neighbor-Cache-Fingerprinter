@@ -7,4 +7,5 @@ ncf_SOURCES = FilePacketCapture.cpp \
 		InterfacePacketCapture.cpp \
 		PacketCapture.cpp \
 		Config.cpp \
+		Probes.cpp \
 		main.cpp

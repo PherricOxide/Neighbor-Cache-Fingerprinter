@@ -6,6 +6,7 @@
 #include "InterfacePacketCapture.h"
 #include "ArpFingerprint.h"
 #include "Config.h"
+#include "Probes.h"
 
 using namespace std;
 using namespace Nova;
@@ -14,13 +15,11 @@ using namespace Nova;
 // TOOD: Might want to move state data out of the fingerprint and into per test structs of some sort
 ArpFingerprint fingerprint;
 
-/* Buffer for our probe packets */
-const int probeBufferSize = ETH_HDR_LEN + IP_HDR_LEN + TCP_HDR_LEN;
-unsigned char probeBuffer[probeBufferSize];
-pthread_mutex_t probeBufferLock;
 
 /* This indicates that we've seen the probe packet that we sent and can wait for replies */
 bool seenProbe = false;
+
+Prober prober;
 
 timeval lastARPReply; /* Used to compute the time between ARP requests */
 
@@ -106,12 +105,12 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 		/* Check if our own probe packet went over the interface */
 		if (!seenProbe)
 		{
-			if (pkthdr->len != probeBufferSize)
+			if (pkthdr->len != prober.probeBufferSize)
 				return;
 
 			for (int i = 0; i < pkthdr->len; i++)
 			{
-				if (packet[i] != probeBuffer[i])
+				if (packet[i] != prober.probeBuffer[i])
 				{
 					return;
 				}
@@ -138,37 +137,11 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 	}
 }
 
-void SendSYN(
-		addr dstIP, addr dstMAC,
-		addr srcIP, addr srcMAC,
-		int dstPort, int srcPort)
-{
-	pthread_mutex_lock(&probeBufferLock);
-	eth_pack_hdr(probeBuffer, dstMAC.addr_eth, srcMAC.addr_eth, ETH_TYPE_IP);
-	ip_pack_hdr(probeBuffer + ETH_HDR_LEN, 0, IP_HDR_LEN + TCP_HDR_LEN, 0, 0, 128, IP_PROTO_TCP, srcIP.addr_ip, dstIP.addr_ip);
-	tcp_pack_hdr(probeBuffer + ETH_HDR_LEN + IP_HDR_LEN, srcPort, dstPort, 0x42, 0, TH_SYN, 4096, 0);
-	ip_checksum(probeBuffer + ETH_HDR_LEN, probeBufferSize - ETH_HDR_LEN);
-	pthread_mutex_unlock(&probeBufferLock);
-
-	eth_t *eth = eth_open(CI->m_interface.c_str());
-	if (eth == NULL)
-	{
-		cout << "Unable to open ethernet interface to send TCP SYN" << endl;
-		return;
-	}
-
-	cout << "Sending SYN probe to " << addr_ntoa(&dstIP) << "/" << addr_ntoa(&dstMAC) << " from " << addr_ntoa(&srcIP) << "/" << addr_ntoa(&srcMAC) << endl;
-
-	eth_send(eth, probeBuffer, probeBufferSize);
-	eth_close(eth);
-}
-
 int main(int argc, char ** argv)
 {
 	Config::Inst()->LoadArgs(argv, argc);
 	
 
-	pthread_mutex_init(&probeBufferLock, NULL);
 
 
 	InterfacePacketCapture *capture = new InterfacePacketCapture(CI->m_interface);
@@ -184,7 +157,8 @@ int main(int argc, char ** argv)
 	// Wait a bit for the capture thread to get going
 	sleep(1);
 
-	SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, CI->m_srcmac, CI->m_dstport, CI->m_srcport);
+
+	prober.SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, CI->m_srcmac, CI->m_dstport, CI->m_srcport);
 
 	// TODO: 6 seconds should probably be an option. Will figure out timing configuration once more tests written
 	sleep(CI->m_sleeptime);
