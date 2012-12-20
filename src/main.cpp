@@ -165,37 +165,41 @@ int main(int argc, char ** argv)
 	capture->StartCapture();
 	sleep(1);
 
-	prober.SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, CI->m_srcmac, CI->m_dstport, CI->m_srcport);
-	sleep(CI->m_sleeptime);
-
-	pthread_mutex_lock(&cbLock);
-	cout << fingerprint.toString() << endl << endl;
-	pthread_mutex_unlock(&cbLock);
-
-
-	for (int i = 0; i < 140; i++)
+	if (CI->m_test == 0 || CI->m_test == 1)
 	{
-		pthread_mutex_lock(&cbLock);
-		fingerprint = ArpFingerprint();
-		seenProbe = false;
-
-		// Only reply to the 1st ARP request in this test
-		if (i == 0)
-			replyToArp = true;
-		else
-			replyToArp = false;
-
 		prober.SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, CI->m_srcmac, CI->m_dstport, CI->m_srcport);
-		pthread_mutex_unlock(&cbLock);
-
-		sleep(1);
+		sleep(CI->m_sleeptime);
 
 		pthread_mutex_lock(&cbLock);
 		cout << fingerprint.toString() << endl << endl;
-		if (fingerprint.arpRequests > 0 && i != 0)
-			break;
 		pthread_mutex_unlock(&cbLock);
+	}
 
+	if (CI->m_test == 0 || CI->m_test == 2)
+	{
+		for (int i = 0; i < 140; i++)
+		{
+			pthread_mutex_lock(&cbLock);
+			fingerprint = ArpFingerprint();
+			seenProbe = false;
+
+			// Only reply to the 1st ARP request in this test
+			if (i == 0)
+				replyToArp = true;
+			else
+				replyToArp = false;
+
+			prober.SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, CI->m_srcmac, CI->m_dstport, CI->m_srcport);
+			pthread_mutex_unlock(&cbLock);
+
+			sleep(1);
+
+			pthread_mutex_lock(&cbLock);
+			cout << fingerprint.toString() << endl << endl;
+			if (fingerprint.arpRequests > 0 && i != 0)
+				break;
+			pthread_mutex_unlock(&cbLock);
+		}
 	}
 
 

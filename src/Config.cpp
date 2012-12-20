@@ -67,6 +67,11 @@ void Config::LoadArgs(char ** &argv, int &argc)
 					po::value<int>(&m_sleeptime)->default_value(8),
 					"How long to wait for replies before assumed server has given up"
 			)
+
+			("test",
+					po::value<int>(&m_test)->default_value(0),
+					"Test to run. \n0: All. \n1: Probe with no reply. \n2: Probe reply then check timeout."
+			)
 		;
 
 		po::variables_map vm;

@@ -13,6 +13,8 @@ public:
 
 	std::string m_interface;
 
+	int m_test;
+
 	std::string m_srcipString, m_dstipString;
 	addr m_srcip, m_dstip;
 	addr m_srcmac, m_dstmac;
