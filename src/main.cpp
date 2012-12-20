@@ -33,6 +33,9 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 	addr dstMac;
 	addr_pack(&dstMac, ADDR_TYPE_ETH, ETH_ADDR_BITS, &eth->eth_dst, ETH_ADDR_LEN);
 
+	addr srcMac;
+	addr_pack(&srcMac, ADDR_TYPE_ETH, ETH_ADDR_BITS, &eth->eth_src, ETH_ADDR_LEN);
+
 	/* Stuff the broadcast MAC in an addr type for comparison later */
 	addr broadcastMAC;
 	unsigned char broadcastBuffer[ETH_ADDR_LEN] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
@@ -56,10 +59,11 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 			arp_ethip *arpRequest = (arp_ethip*)(packet + ETH_HDR_LEN + ARP_HDR_LEN);
 			addr addr;
 			addr_pack(&addr, ADDR_TYPE_IP, IP_ADDR_BITS, arpRequest->ar_tpa, IP_ADDR_LEN);
-			cout << "Got request for IP " << addr_ntoa(&addr) << endl;
 
 			if (addr_cmp(&addr, &CI->m_srcip) == 0)
 			{
+				cout << "Got an ARP request to " << addr_ntoa(&dstMac) << " for IP " << addr_ntoa(&addr) << " from " << addr_ntoa(&srcMac) << endl;
+
 				if (addr_cmp(&dstMac, &CI->m_srcmac) == 0)
 				{
 					fingerprint.unicastRequest = true;
@@ -114,7 +118,7 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 			}
 
 			seenProbe = true;
-			cout << "Saw our probe packet" << endl;
+			cout << "Packet capture thread has seen probe packet go out" << endl;
 		}
 		else
 		{
@@ -153,6 +157,8 @@ void SendSYN(
 		return;
 	}
 
+	cout << "Sending SYN probe to " << addr_ntoa(&dstIP) << "/" << addr_ntoa(&dstMAC) << " from " << addr_ntoa(&srcIP) << "/" << addr_ntoa(&srcMAC) << endl;
+
 	eth_send(eth, probeBuffer, probeBufferSize);
 	eth_close(eth);
 }
@@ -178,10 +184,10 @@ int main(int argc, char ** argv)
 	// Wait a bit for the capture thread to get going
 	sleep(1);
 
-	SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, CI->m_srcmac, 42, 54629);
+	SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, CI->m_srcmac, CI->m_dstport, CI->m_srcport);
 
 	// TODO: 6 seconds should probably be an option. Will figure out timing configuration once more tests written
-	sleep(6);
+	sleep(CI->m_sleeptime);
 	cout << fingerprint.toString() << endl << endl;
 
 	return 0;

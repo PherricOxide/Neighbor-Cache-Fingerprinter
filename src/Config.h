@@ -12,16 +12,13 @@ public:
 
 
 	std::string m_interface;
-	
-	std::string m_srcipString;
-	addr m_srcip;
 
-	std::string m_dstipString;
-	addr m_dstip;
+	std::string m_srcipString, m_dstipString;
+	addr m_srcip, m_dstip;
+	addr m_srcmac, m_dstmac;
+	int m_srcport, m_dstport;
+	int m_sleeptime;
 
-	addr m_srcmac;
-	addr m_dstmac;
-	
 private:
 	Config();
 

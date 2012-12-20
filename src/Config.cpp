@@ -52,6 +52,21 @@ void Config::LoadArgs(char ** &argv, int &argc)
 				po::value<std::string>()->default_value("38:60:77:20:CC:50"),
 				"Destination MAC Address"
 			)
+
+			("srcport",
+					po::value<int>(&m_srcport)->default_value(42),
+					"Source Port"
+			)
+
+			("dstport",
+					po::value<int>(&m_dstport)->default_value(139),
+					"Destination Port"
+			)
+
+			("wait",
+					po::value<int>(&m_sleeptime)->default_value(8),
+					"How long to wait for replies before assumed server has given up"
+			)
 		;
 
 		po::variables_map vm;
