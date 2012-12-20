@@ -38,21 +38,20 @@ struct ArpFingerprint
 	std::string toString()
 	{
 		std::stringstream ss;
-		ss << "Number of ARP Requests Seen			      : " << arpRequests << std::endl;
-		ss << "Saw TCP response 						  : " << std::boolalpha << sawTCPResponse << std::endl;
+		ss << "Number of ARP Requests Seen                : " << arpRequests << std::endl;
+		ss << "Saw TCP response                           : " << std::boolalpha << sawTCPResponse << std::endl;
 		ss << "Replied before ARP request                 : " << std::boolalpha << replyBeforeARP << std::endl;
 
 		if (arpRequests > 0)
 		{
-			ss << "Got unicast instead of bcast ARP request   : " << std::boolalpha << unicastRequest << std::endl;
-
+			ss << "Got unicast instead of bcast request        : " << std::boolalpha << unicastRequest << std::endl;
 		}
 
 		if (arpRequests > 1)
 		{
-			ss << "Average time between each request (ms)     : " << averageTimeBetweenRequests << std::endl;
+			ss << "Average time between each request (ms)      : " << averageTimeBetweenRequests << std::endl;
 
-			ss << "Time between ARP attempts                  : ";
+			ss << "Time between ARP attempts                   : ";
 			for (int i = 0; i < arpRequests - 1; i++)
 				ss << timeBetweenRequests[i] << " ";
 			ss << std::endl;
