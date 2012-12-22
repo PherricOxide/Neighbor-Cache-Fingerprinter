@@ -14,3 +14,5 @@ install-sh
 src/.deps/*
 src/ncf
 config.log
+/src/.cproject
+/src/.project
