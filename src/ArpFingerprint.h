@@ -24,9 +24,13 @@ struct ArpFingerprint
 	/* Timing between ARP requests */
 	int timeBetweenRequests[MAX_RECORDED_REPLIES];
 	double averageTimeBetweenRequests;
+	uint32_t m_minTimeBetweenRequests;
+	uint32_t m_maxTimebetweenRequests;
 
 	ArpFingerprint()
 	{
+		m_maxTimebetweenRequests = 0;
+		m_minTimeBetweenRequests = ~0;
 		arpRequests = 0;
 		sawTCPResponse = false;
 		averageTimeBetweenRequests = -1;
@@ -35,12 +39,17 @@ struct ArpFingerprint
 			timeBetweenRequests[i] = -1;
 	}
 
+	// toString that weeds out useless information
 	std::string toString()
 	{
 		std::stringstream ss;
 		ss << "Number of ARP Requests Seen                : " << arpRequests << std::endl;
 		ss << "Saw TCP response                           : " << std::boolalpha << sawTCPResponse << std::endl;
-		ss << "Replied before ARP request                 : " << std::boolalpha << replyBeforeARP << std::endl;
+
+		if (sawTCPResponse)
+		{
+			ss << "Replied before ARP request                 : " << std::boolalpha << replyBeforeARP << std::endl;
+		}
 
 		if (arpRequests > 0)
 		{
@@ -52,9 +61,16 @@ struct ArpFingerprint
 			ss << "Average time between each request (ms)      : " << averageTimeBetweenRequests << std::endl;
 
 			ss << "Time between ARP attempts                   : ";
+
+
 			for (int i = 0; i < arpRequests - 1; i++)
+			{
 				ss << timeBetweenRequests[i] << " ";
+			}
 			ss << std::endl;
+
+			ss << "Min time between each request (ms)         : " << m_minTimeBetweenRequests << std::endl;
+			ss << "Max time between each request (ms)         : " << m_maxTimebetweenRequests << std::endl;
 		}
 
 		return ss.str();

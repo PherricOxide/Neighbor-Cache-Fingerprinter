@@ -20,7 +20,7 @@ public:
 	addr m_srcmac, m_dstmac;
 	int m_srcport, m_dstport;
 	int m_sleeptime;
-
+	int m_retries;
 private:
 	Config();
 

@@ -26,6 +26,19 @@ void Config::LoadArgs(char ** &argv, int &argc)
 {
 	po::options_description desc("Allowed options");
 	try {
+
+		string testString = "Test to run. ";
+		testString += "1: Probe with no reply.\n";
+		testString += "2: Probe reply then check timeout.\n";
+		testString += "3: Check response to gratuitous ARP.\n";
+
+		testString += "100: DEBUG: Send a gratuitous bcast ARP reply with TPA=srcip and exit.\n";
+		testString += "101: DEBUG: Send a gratuitous bcast ARP reply with TPA=0 and exit.\n";
+		testString += "100: DEBUG: Send a gratuitous unicast ARP reply with TPA=srcip and exit.\n";
+		testString += "101: DEBUG: Send a gratuitous unicast ARP reply with TPA=0 and exit.\n";
+		testString += "200: DEBUG: Just send a TCP probe and exit.\n";
+
+
 		desc.add_options()
 			("help,h", "produce help message")
 			("interface,i", 
@@ -70,7 +83,13 @@ void Config::LoadArgs(char ** &argv, int &argc)
 
 			("test",
 					po::value<int>(&m_test)->default_value(0),
-					"Test to run. \n0: All. \n1: Probe with no reply. \n2: Probe reply then check timeout."
+					testString.c_str()
+			)
+
+			("retries",
+					po::value<int>(&m_retries)->default_value(1),
+					"Depends on --test value"
+
 			)
 		;
 

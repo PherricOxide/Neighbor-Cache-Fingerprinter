@@ -21,6 +21,8 @@ ArpFingerprint fingerprint;
 bool seenProbe = false;
 bool replyToArp = false;
 
+addr broadcastMAC, zeroIP, zeroMAC;
+
 Prober prober;
 
 timeval lastARPReply; /* Used to compute the time between ARP requests */
@@ -33,14 +35,10 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 		return;
 
 	eth_hdr *eth = (eth_hdr*)packet;
-	addr dstMac, srcMac, broadcastMAC;
+	addr dstMac, srcMac;
 
 	addr_pack_eth(&dstMac, (uint8_t*)&eth->eth_dst);
 	addr_pack_eth(&srcMac, (uint8_t*)&eth->eth_src);
-
-	/* Stuff the broadcast MAC in an addr type for comparison later */
-	unsigned char broadcastBuffer[ETH_ADDR_LEN] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
-	addr_pack_eth(&broadcastMAC, (uint8_t*)broadcastBuffer);
 
 	if (ntohs(eth->eth_type) == ETH_TYPE_ARP)
 	{
@@ -99,7 +97,14 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 						sum += fingerprint.timeBetweenRequests[i];
 					fingerprint.averageTimeBetweenRequests = sum / (fingerprint.arpRequests - 1);
 
-
+					if (diff > fingerprint.m_maxTimebetweenRequests)
+					{
+						fingerprint.m_maxTimebetweenRequests = diff;
+					}
+					if (diff < fingerprint.m_minTimeBetweenRequests)
+					{
+						fingerprint.m_minTimeBetweenRequests = diff;
+					}
 				}
 				lastARPReply = pkthdr->ts;
 			}
@@ -152,6 +157,15 @@ int main(int argc, char ** argv)
 {
 	Config::Inst()->LoadArgs(argv, argc);
 
+	/* Stuff the broadcast MAC in an addr type for comparison later */
+	unsigned char broadcastBuffer[ETH_ADDR_LEN] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+	addr_pack_eth(&broadcastMAC, (uint8_t*)broadcastBuffer);
+
+	uint32_t zeroNumber = 0;
+	addr zero;
+	addr_pack_ip(&zeroIP, (uint8_t*)&zeroNumber);
+
+
 	stringstream pcapFilterString;
 	pcapFilterString << "arp or (dst host " << CI->m_srcipString << ")";
 
@@ -165,19 +179,59 @@ int main(int argc, char ** argv)
 	capture->StartCapture();
 	sleep(1);
 
-	if (CI->m_test == 0 || CI->m_test == 1)
-	{
-		prober.SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, CI->m_srcmac, CI->m_dstport, CI->m_srcport);
-		sleep(CI->m_sleeptime);
 
-		pthread_mutex_lock(&cbLock);
-		cout << fingerprint.toString() << endl << endl;
-		pthread_mutex_unlock(&cbLock);
+	// This one doesn't update ARP tables on Linux 2.6 but seems to work in Linux 3.x
+	if (CI->m_test == 100)
+	{
+		prober.SendARPReply(&CI->m_srcmac, &broadcastMAC, &CI->m_srcip, &CI->m_srcip);
+		return 0;
 	}
 
-	if (CI->m_test == 0 || CI->m_test == 2)
+	if (CI->m_test == 101)
 	{
-		for (int i = 0; i < 140; i++)
+		prober.SendARPReply(&CI->m_srcmac, &broadcastMAC, &CI->m_srcip, (addr*)&zeroIP);
+		return 0;
+	}
+
+	if (CI->m_test == 102)
+	{
+		prober.SendARPReply(&CI->m_srcmac, &CI->m_dstmac, &CI->m_srcip, &CI->m_dstip);
+		return 0;
+	}
+
+	if (CI->m_test == 103)
+	{
+		prober.SendARPReply(&CI->m_srcmac, &CI->m_dstmac, &CI->m_srcip, (addr*)&zeroIP);
+		return 0;
+	}
+
+	if (CI->m_test == 200)
+	{
+		prober.SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, CI->m_srcmac, CI->m_dstport, CI->m_srcport);
+		return 0;
+	}
+
+	if (CI->m_test == 1)
+	{
+		for (int i = 0; i < CI->m_retries; i++)
+		{
+			prober.SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, CI->m_srcmac, CI->m_dstport, CI->m_srcport);
+			sleep(CI->m_sleeptime);
+
+			pthread_mutex_lock(&cbLock);
+			cout << fingerprint.toString() << endl << endl;
+			// Save the min and max times
+			ArpFingerprint f;
+			f.m_maxTimebetweenRequests = fingerprint.m_maxTimebetweenRequests;
+			f.m_minTimeBetweenRequests = fingerprint.m_minTimeBetweenRequests;
+			fingerprint = f;
+			pthread_mutex_unlock(&cbLock);
+		}
+}
+
+	if (CI->m_test == 2)
+	{
+		for (int i = 0; i < 660; i++)
 		{
 			pthread_mutex_lock(&cbLock);
 			fingerprint = ArpFingerprint();
@@ -201,6 +255,39 @@ int main(int argc, char ** argv)
 			pthread_mutex_unlock(&cbLock);
 		}
 	}
+
+	if (CI->m_test == 3) {
+		/*
+		 * We run this test twice to note a neat difference between Windows and Linux.
+		 * In Linux, the first TCP packet will cause the SYN/RST to put an entry in the ARP table, which will be
+		 * set to FAIL state and then updated to STALE when it sees the gratuitous ARP, causing the 2nd probe to
+		 * be replied to followed by ARP requests. Windows 7 at least will ignore the gratuitous ARP packet
+		 * entirely and not exhibit the same behavior.
+		*/
+		for (int i = 0; i < 2; i++)
+		{
+			pthread_mutex_lock(&cbLock);
+			fingerprint = ArpFingerprint();
+			seenProbe = false;
+			pthread_mutex_unlock(&cbLock);
+
+
+			// Send gratuitous ARP reply
+			addr zero;
+			uint32_t zeroIp = 0;
+			addr_pack_ip(&zero, (uint8_t*)&zeroIp);
+			prober.SendARPReply(&CI->m_srcmac, &broadcastMAC, &CI->m_srcip, &CI->m_srcip);
+
+
+			prober.SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, CI->m_srcmac, CI->m_dstport, CI->m_srcport);
+			sleep(CI->m_sleeptime);
+			pthread_mutex_lock(&cbLock);
+			cout << fingerprint.toString() << endl << endl;
+			pthread_mutex_unlock(&cbLock);
+
+		}
+	}
+
 
 
 	return 0;
