@@ -180,7 +180,8 @@ int main(int argc, char ** argv)
 	sleep(1);
 
 
-	// This one doesn't update ARP tables on Linux 2.6 but seems to work in Linux 3.x
+	// This one doesn't update ARP tables on Linux 2.6 but seems to work in Linux 3.x.
+	// The rest all work to update the table but not to create new entry in Linux.
 	if (CI->m_test == 100)
 	{
 		prober.SendARPReply(&CI->m_srcmac, &broadcastMAC, &CI->m_srcip, &CI->m_srcip);
@@ -193,6 +194,7 @@ int main(int argc, char ** argv)
 		return 0;
 	}
 
+	// This one adds an entry to the ARP table in FreeBSD
 	if (CI->m_test == 102)
 	{
 		prober.SendARPReply(&CI->m_srcmac, &CI->m_dstmac, &CI->m_srcip, &CI->m_dstip);

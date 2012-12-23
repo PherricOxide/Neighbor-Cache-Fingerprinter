@@ -1,4 +1,4 @@
-﻿                                    _          _______    _______ 
+﻿                                     __         _______    _______ 
                                     ( (    /|  (  ____ \  (  ____ \
                                     |  \  ( |  | (    \/  | (    \/
                                     |   \ | |  | |        | (__    
@@ -65,6 +65,24 @@ back off on the timing, sending their first retry after about 850ms and their se
 
 Testing this is as simple as sending the SYN probe and watching the result.
 
+
+===================================================================================================
+                Fingerprint Technique: Time before sending another ARP Request
+===================================================================================================
+
+        After a proper request/reply ARP exchange, the Neighbor Cache gets an entry put in it for
+the IP address and for a certain amount of time communication will continue without additional ARP
+requests. To test this a SYN packet is sent, an ARP exchange happens, and then SYN packets are sent
+once a second until another ARP request is seen. 
+
+Operating system response examples,
+        Windows XP                     : Timeout after 10 minutes (if referred to, else 2 minutes)
+        Windows 7/Vista/Server 2008    : Timeout between 15 seconds and 45 seconds
+        Freebsd                        : Timeout after 20 minutes
+        Linux                          : Timeout usually 30 seconds (base_reachable_time + delay_first_probe_time)
+
+Some more research needs to be dono on the best way to capture the values of delay_first_probe_time
+and differences between stale timing and actually falling out of the table and beig gc'ed in Linux.
 
 ===================================================================================================
                 Fingerprint Technique: Response to Gratuitous ARP Replies
