@@ -116,7 +116,7 @@ configurations with the same source IP difficult.
 
 ===================================================================================================
                         TODO RESEARCH IN PROGRESS
-                Fingerprint Technique: Ignored second ARP replies
+		Fingerprint Technique: Ignored second ARP replies
 ===================================================================================================
 (http://www-01.ibm.com/support/docview.wss?uid=swg1IO06154) 
 
@@ -125,5 +125,25 @@ if an ARP update for the same IP address is received within an
 800ms window, ignore the second ARP. 
 
 TODO: Can we use this for fingerprinting via double ARP replies and checking which is used?
+
+
+===================================================================================================
+                        TODO RESEARCH IN PROGRESS
+	Fingerprint Technique: Feedback from higher protcols extending timeout values
+===================================================================================================
+
+Linux has the ability to extend timeout values if there's positive feedback from higher level
+protocols, such as a 3 way TCP handshake. Need to write tests for this and do some source diving
+in the kernel to see what else counts besides a 3 way handshake for positive feedback.
+
+===================================================================================================
+                        TODO RESEARCH IN PROGRESS
+	Fingerprint Technique: Infer Neighbor Cache size by flooding to cause entry dumping
+===================================================================================================
+
+Can we fill the ARP table with garbage entries in order for it to start dumping old ones? 
+Can we reliably use this to infer the table size, even with Linux's near random 
+cache garbage collection rules? Can we do this on class A networks, or do we really
+need class B network subnets in order to make this a viable test?
 
 
