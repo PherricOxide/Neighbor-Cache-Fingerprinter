@@ -168,8 +168,10 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 
 
 // This is used in the gratuitous ARP test for checking the result
-void gratuitousResultCheck()
+bool gratuitousResultCheck()
 {
+	bool result;
+
 	prober.SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, origSrcMac, CI->m_dstport, CI->m_srcport);
 	sleep(1);
 
@@ -177,19 +179,26 @@ void gratuitousResultCheck()
 	if (!fingerprint.sawTCPResponse)
 	{
 		cout << "Warning: Saw no TCP response! Unable to perform test." << endl;
-		exit(1);
+		//exit(1);
 	}
 
 	if (fingerprint.replyToCorrectMAC)
 	{
+		result = true;
 		cout << "PASS: Gratuitous ARP was accepted into the table" << endl << endl;
 	}
 	else
 	{
+		result = false;
 		cout << "FAIL: Gratuitous ARP was NOT accepted into the table" << endl << endl;;
 	}
 
+	fingerprint = ArpFingerprint();
+	seenProbe = false;
+	CI->m_srcmac.__addr_u.__eth.data[5]++;
+
 	pthread_mutex_unlock(&cbLock);
+	return result;
 }
 
 int main(int argc, char ** argv)
@@ -201,8 +210,12 @@ int main(int argc, char ** argv)
 	addr_pack_eth(&broadcastMAC, (uint8_t*)broadcastBuffer);
 
 	uint32_t zeroNumber = 0;
-	addr zero;
 	addr_pack_ip(&zeroIP, (uint8_t*)&zeroNumber);
+
+	uint8_t zeroMacNumber[6];
+	for (int i = 0; i < 6; i++)
+		zeroMacNumber[i] = 0;
+	addr_pack_eth(&zeroMAC, &zeroMacNumber[0]);
 
 
 	stringstream pcapFilterString;
@@ -344,7 +357,7 @@ int main(int argc, char ** argv)
 		// Get ourselves into the ARP table
 		prober.SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, CI->m_srcmac, CI->m_dstport, CI->m_srcport);
 
-		sleep(2);
+		sleep(5);
 
 		pthread_mutex_lock(&cbLock);
 		fingerprint = ArpFingerprint();
@@ -353,21 +366,53 @@ int main(int argc, char ** argv)
 		CI->m_srcmac.__addr_u.__eth.data[5]++;
 		pthread_mutex_unlock(&cbLock);
 
-		// Test 1
-		prober.SendARPReply(&CI->m_srcmac, &broadcastMAC, &CI->m_srcip, &CI->m_srcip);
-		gratuitousResultCheck();
+		stringstream result;
+		// Try for both ARP request and ARP reply opcodes
+		for (int arpOpCode = 2; arpOpCode > 0; arpOpCode--)
+		{
+			for (int macDestination = 0; macDestination < 2; macDestination++)
+			{
+				for (int tpa = 0; tpa < 3; tpa++)
+				{
+					for (int tha = 0; tha < 3; tha++)
+					{
+						addr tpaAddress;
+						if (tpa == 0) {
+							tpaAddress = zeroIP;
+						} else if (tpa == 1) {
+							tpaAddress = CI->m_srcip;
+						} else if (tpa == 2) {
+							tpaAddress = CI->m_dstip;
+						}
 
-		// Test 2
-		prober.SendARPReply(&CI->m_srcmac, &broadcastMAC, &CI->m_srcip, (addr*)&zeroIP);
-		gratuitousResultCheck();
+						addr thaAddress;
+						if (tha == 0) {
+							thaAddress = zeroMAC;
+						} else if (tha == 1) {
+							thaAddress = broadcastMAC;
+						} else if (tha == 2) {
+							thaAddress = CI->m_dstmac;
+						}
 
-		// Test 3
-		prober.SendARPReply(&CI->m_srcmac, &CI->m_dstmac, &CI->m_srcip, &CI->m_dstip);
-		gratuitousResultCheck();
 
-		// Test 4
-		prober.SendARPReply(&CI->m_srcmac, &CI->m_dstmac, &CI->m_srcip, (addr*)&zeroIP);
-		gratuitousResultCheck();
+						// Ethernet frame destination MAC
+						addr destinationMac;
+						if (macDestination == 0) {
+							destinationMac = broadcastMAC;
+						} else if (macDestination == 1) {
+							destinationMac = CI->m_dstmac;
+						}
+
+						prober.SendARPReply(&CI->m_srcmac, &destinationMac, &CI->m_srcip, &tpaAddress, arpOpCode, &thaAddress);
+						result << gratuitousResultCheck();
+					}
+				}
+			}
+		}
+
+		cout << "Result fingerprint from gratuitous test," << endl;
+		cout << result.str() << endl;
+
 	}
 
 

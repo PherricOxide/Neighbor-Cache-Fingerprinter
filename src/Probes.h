@@ -10,7 +10,7 @@ public:
 
 	Prober();
 
-	void SendARPReply(struct addr *srcMAC, struct addr *dstMAC, struct addr *srcIP, struct addr *dstIP);
+	void SendARPReply(struct addr *srcMAC, struct addr *dstMAC, struct addr *srcIP, struct addr *dstIP, int opcode = ARP_OP_REPLY, struct addr *tha = NULL);
 
 	void SendSYN(
 			addr dstIP, addr dstMAC,

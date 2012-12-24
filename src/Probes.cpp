@@ -37,13 +37,18 @@ void Prober::SendSYN(
 }
 
 void Prober::SendARPReply(
-		struct addr *srcMAC, struct addr *dstMAC, struct addr *srcIP, struct addr *dstIP)
+		struct addr *srcMAC, struct addr *dstMAC, struct addr *srcIP, struct addr *dstIP, int opcode, struct addr *tha)
 {
+	// Usually tha is going to be the destination MAC, except for weird cases with gratuitous replies
+	if (tha == NULL)
+	{
+		tha = dstMAC;
+	}
     u_char pkt[ETH_HDR_LEN + ARP_HDR_LEN + ARP_ETHIP_LEN];
 
     eth_pack_hdr(pkt, dstMAC->addr_eth, srcMAC->addr_eth, ETH_TYPE_ARP);
-    arp_pack_hdr_ethip(pkt + ETH_HDR_LEN, ARP_OP_REPLY, srcMAC->addr_eth,
-        srcIP->addr_ip, dstMAC->addr_eth, dstIP->addr_ip);
+    arp_pack_hdr_ethip(pkt + ETH_HDR_LEN, opcode, srcMAC->addr_eth,
+        srcIP->addr_ip, tha->addr_eth, dstIP->addr_ip);
 
 	eth_t *eth = eth_open(CI->m_interface.c_str());
 	if (eth == NULL)
@@ -52,7 +57,20 @@ void Prober::SendARPReply(
 		return;
 	}
 
-	cout << "Sending ARP reply to " << addr_ntoa(dstIP) << " / " << addr_ntoa(dstMAC) << " from " << addr_ntoa(srcIP) << " / " << addr_ntoa(srcMAC) << endl;
+	if (opcode == ARP_OP_REPLY)
+	{
+		cout << "Sending ARP_REPLY to ";
+	}
+	else if (opcode == ARP_OP_REQUEST)
+	{
+		cout << "Sending ARP_REQUEST to ";
+	}
+	else
+	{
+		cout << "ERROR: Invalid ARP op code" << endl;
+	}
+
+	cout << addr_ntoa(dstIP) << " / " << addr_ntoa(dstMAC) << " from " << addr_ntoa(srcIP) << " / " << addr_ntoa(srcMAC) << " and THA of " << addr_ntoa(tha) << endl;
 
 	eth_send(eth, pkt, ETH_HDR_LEN + ARP_HDR_LEN + ARP_ETHIP_LEN);
 	eth_close(eth);
