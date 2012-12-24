@@ -12,6 +12,10 @@ struct ArpFingerprint
 	 is in the ARP cache but has become stale, but not if it isn't in the cache at all */
 	bool replyBeforeARP;
 
+
+	/* Was the TCP reply to the MAC address we last announced? */
+	bool replyToCorrectMAC;
+
 	/* Did we get unicast or multicast requests*/
 	/* TODO: Handle the case where we got some combination of both? */
 	bool unicastRequest;

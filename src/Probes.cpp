@@ -30,7 +30,7 @@ void Prober::SendSYN(
 		return;
 	}
 
-	cout << "Sending SYN probe to " << addr_ntoa(&dstIP) << "/" << addr_ntoa(&dstMAC) << " from " << addr_ntoa(&srcIP) << "/" << addr_ntoa(&srcMAC) << endl;
+	cout << "Sending SYN probe to " << addr_ntoa(&dstIP) << " / " << addr_ntoa(&dstMAC) << " from " << addr_ntoa(&srcIP) << " / " << addr_ntoa(&srcMAC) << endl;
 
 	eth_send(eth, probeBuffer, probeBufferSize);
 	eth_close(eth);
@@ -52,7 +52,7 @@ void Prober::SendARPReply(
 		return;
 	}
 
-	cout << "Sending ARP reply to " << addr_ntoa(dstMAC) << "/" << " from " << addr_ntoa(srcIP) << "/" << addr_ntoa(srcMAC) << endl;
+	cout << "Sending ARP reply to " << addr_ntoa(dstIP) << " / " << addr_ntoa(dstMAC) << " from " << addr_ntoa(srcIP) << " / " << addr_ntoa(srcMAC) << endl;
 
 	eth_send(eth, pkt, ETH_HDR_LEN + ARP_HDR_LEN + ARP_ETHIP_LEN);
 	eth_close(eth);
