@@ -21,7 +21,7 @@ ArpFingerprint fingerprint;
 bool seenProbe = false;
 bool replyToArp = false;
 
-addr broadcastMAC, zeroIP, zeroMAC;
+addr broadcastMAC, zeroIP, zeroMAC, origSrcMac;
 
 Prober prober;
 
@@ -166,6 +166,32 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 	}
 }
 
+
+// This is used in the gratuitous ARP test for checking the result
+void gratuitousResultCheck()
+{
+	prober.SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, origSrcMac, CI->m_dstport, CI->m_srcport);
+	sleep(1);
+
+	pthread_mutex_lock(&cbLock);
+	if (!fingerprint.sawTCPResponse)
+	{
+		cout << "Warning: Saw no TCP response! Unable to perform test." << endl;
+		exit(1);
+	}
+
+	if (fingerprint.replyToCorrectMAC)
+	{
+		cout << "PASS: Gratuitous ARP was accepted into the table" << endl << endl;
+	}
+	else
+	{
+		cout << "FAIL: Gratuitous ARP was NOT accepted into the table" << endl << endl;;
+	}
+
+	pthread_mutex_unlock(&cbLock);
+}
+
 int main(int argc, char ** argv)
 {
 	Config::Inst()->LoadArgs(argv, argc);
@@ -308,7 +334,7 @@ int main(int argc, char ** argv)
 
 	if (CI->m_test == 4)
 	{
-		addr origSrcMac = CI->m_srcmac;
+		origSrcMac = CI->m_srcmac;
 
 		pthread_mutex_lock(&cbLock);
 		replyToArp = true;
@@ -327,110 +353,21 @@ int main(int argc, char ** argv)
 		CI->m_srcmac.__addr_u.__eth.data[5]++;
 		pthread_mutex_unlock(&cbLock);
 
+		// Test 1
 		prober.SendARPReply(&CI->m_srcmac, &broadcastMAC, &CI->m_srcip, &CI->m_srcip);
-		prober.SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, origSrcMac, CI->m_dstport, CI->m_srcport);
-		sleep(2);
-
-		pthread_mutex_lock(&cbLock);
-
-		if (!fingerprint.sawTCPResponse)
-		{
-			cout << "Warning: Saw no TCP response! Unable to perform test." << endl;
-			return 1;
-		}
-
-		if (fingerprint.replyToCorrectMAC)
-		{
-			cout << "PASS: Gratuitous ARP was accepted into the table" << endl << endl;
-		}
-		else
-		{
-			cout << "FAIL: Gratuitous ARP was NOT accepted into the table" << endl << endl;;
-		}
-
-		fingerprint = ArpFingerprint();
-		seenProbe = false;
-		CI->m_srcmac.__addr_u.__eth.data[5]++;
-		pthread_mutex_unlock(&cbLock);
-
-
+		gratuitousResultCheck();
 
 		// Test 2
 		prober.SendARPReply(&CI->m_srcmac, &broadcastMAC, &CI->m_srcip, (addr*)&zeroIP);
-		prober.SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, origSrcMac, CI->m_dstport, CI->m_srcport);
-		sleep(2);
-
-		pthread_mutex_lock(&cbLock);
-		if (!fingerprint.sawTCPResponse)
-		{
-			cout << "Warning: Saw no TCP response! Unable to perform test." << endl;
-			return 1;
-		}
-
-		if (fingerprint.replyToCorrectMAC)
-		{
-			cout << "PASS: Gratuitous ARP was accepted into the table" << endl << endl;
-		}
-		else
-		{
-			cout << "FAIL: Gratuitous ARP was NOT accepted into the table" << endl << endl;;
-		}
-
-		fingerprint = ArpFingerprint();
-		seenProbe = false;
-		CI->m_srcmac.__addr_u.__eth.data[5]++;
-		pthread_mutex_unlock(&cbLock);
-
+		gratuitousResultCheck();
 
 		// Test 3
 		prober.SendARPReply(&CI->m_srcmac, &CI->m_dstmac, &CI->m_srcip, &CI->m_dstip);
-		prober.SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, origSrcMac, CI->m_dstport, CI->m_srcport);
-		sleep(2);
-
-		pthread_mutex_lock(&cbLock);
-		if (!fingerprint.sawTCPResponse)
-		{
-			cout << "Warning: Saw no TCP response! Unable to perform test." << endl;
-			return 1;
-		}
-
-		if (fingerprint.replyToCorrectMAC)
-		{
-			cout << "PASS: Gratuitous ARP was accepted into the table" << endl << endl;
-		}
-		else
-		{
-			cout << "FAIL: Gratuitous ARP was NOT accepted into the table" << endl << endl;;
-		}
-
-		fingerprint = ArpFingerprint();
-		seenProbe = false;
-		CI->m_srcmac.__addr_u.__eth.data[5]++;
-		pthread_mutex_unlock(&cbLock);
-
+		gratuitousResultCheck();
 
 		// Test 4
 		prober.SendARPReply(&CI->m_srcmac, &CI->m_dstmac, &CI->m_srcip, (addr*)&zeroIP);
-		prober.SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, origSrcMac, CI->m_dstport, CI->m_srcport);
-		sleep(2);
-
-		pthread_mutex_lock(&cbLock);
-		if (!fingerprint.sawTCPResponse)
-		{
-			cout << "Warning: Saw no TCP response! Unable to perform test." << endl;
-			return 1;
-		}
-
-		if (fingerprint.replyToCorrectMAC)
-		{
-			cout << "PASS: Gratuitous ARP was accepted into the table" << endl << endl;
-		}
-		else
-		{
-			cout << "FAIL: Gratuitous ARP was NOT accepted into the table" << endl << endl;;
-		}
-
-		pthread_mutex_unlock(&cbLock);
+		gratuitousResultCheck();
 	}
 
 
