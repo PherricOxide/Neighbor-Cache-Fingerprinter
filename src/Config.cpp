@@ -27,7 +27,7 @@ void Config::LoadArgs(char ** &argv, int &argc)
 	po::options_description desc("Allowed options");
 	try {
 
-		string testString = "Test to run. ";
+		string testString = "Test to run, \n";
 		testString += "1: Probe with no reply.\n";
 		testString += "2: Probe reply then check timeout.\n";
 		testString += "3: Check response to gratuitous ARP.\n";

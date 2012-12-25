@@ -17,7 +17,7 @@ using namespace Nova;
 
 // TOOD: Might want to move state data out of the fingerprint and into per test structs of some sort
 pthread_mutex_t cbLock;
-ArpFingerprint fingerprint;
+ResponseBehavior response;
 bool seenProbe = false;
 bool replyToArp = false;
 
@@ -66,17 +66,17 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 
 				if (addr_cmp(&dstMac, &CI->m_srcmac) == 0)
 				{
-					fingerprint.unicastRequest = true;
+					response.unicastRequest = true;
 				}
 				else if (addr_cmp(&dstMac, &broadcastMAC) == 0) {
-					fingerprint.unicastRequest = false;
+					response.unicastRequest = false;
 				}
 				else
 				{
 					cout << "WARNING: Got an ARP packet that was neither to the broadcast MAC or our probe MAC. This is unusual." << endl;
 				}
 
-				fingerprint.arpRequests++;
+				response.arpRequests++;
 
 				if (replyToArp)
 					prober.SendARPReply(&CI->m_srcmac, &CI->m_dstmac, &CI->m_srcip, &CI->m_dstip);
@@ -87,23 +87,23 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 				cout << "Time since last ARP request was " << pkthdr->ts.tv_sec  - lastARPReply.tv_sec << " seconds " << endl;
 
 
-				if (fingerprint.arpRequests > 1 && fingerprint.arpRequests < MAX_RECORDED_REPLIES)
+				if (response.arpRequests > 1 && response.arpRequests < MAX_RECORDED_REPLIES)
 				{
-					fingerprint.timeBetweenRequests[fingerprint.arpRequests - 2] = diff;
+					response.timeBetweenRequests[response.arpRequests - 2] = diff;
 
 					/* Compute the average time between requests */
 					double sum = 0;
-					for (int i = 0; i < (fingerprint.arpRequests - 1); i++)
-						sum += fingerprint.timeBetweenRequests[i];
-					fingerprint.averageTimeBetweenRequests = sum / (fingerprint.arpRequests - 1);
+					for (int i = 0; i < (response.arpRequests - 1); i++)
+						sum += response.timeBetweenRequests[i];
+					response.averageTimeBetweenRequests = sum / (response.arpRequests - 1);
 
-					if (diff > fingerprint.m_maxTimebetweenRequests)
+					if (diff > response.m_maxTimebetweenRequests)
 					{
-						fingerprint.m_maxTimebetweenRequests = diff;
+						response.m_maxTimebetweenRequests = diff;
 					}
-					if (diff < fingerprint.m_minTimeBetweenRequests)
+					if (diff < response.m_minTimeBetweenRequests)
 					{
-						fingerprint.m_minTimeBetweenRequests = diff;
+						response.m_minTimeBetweenRequests = diff;
 					}
 				}
 				lastARPReply = pkthdr->ts;
@@ -146,20 +146,20 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 			{
 				if (addr_cmp(&dstMac, &CI->m_srcmac) == 0)
 				{
-					fingerprint.replyToCorrectMAC = true;
+					response.replyToCorrectMAC = true;
 				}
 				else
 				{
-					fingerprint.replyToCorrectMAC = false;
+					response.replyToCorrectMAC = false;
 				}
 
 
 				cout << "Saw a TCP response to " << addr_ntoa(&dstIp) << " / " << addr_ntoa(&dstMac) << " from " << addr_ntoa(&srcIp) << " / " << addr_ntoa(&srcMac) << endl;
-				fingerprint.sawTCPResponse = true;
-				if (fingerprint.arpRequests == 0)
-					fingerprint.replyBeforeARP = true;
+				response.sawTCPResponse = true;
+				if (response.arpRequests == 0)
+					response.replyBeforeARP = true;
 				else
-					fingerprint.replyBeforeARP = false;
+					response.replyBeforeARP = false;
 			}
 
 		}
@@ -176,13 +176,13 @@ bool gratuitousResultCheck()
 	sleep(1);
 
 	pthread_mutex_lock(&cbLock);
-	if (!fingerprint.sawTCPResponse)
+	if (!response.sawTCPResponse)
 	{
 		cout << "Warning: Saw no TCP response! Unable to perform test." << endl;
 		//exit(1);
 	}
 
-	if (fingerprint.replyToCorrectMAC)
+	if (response.replyToCorrectMAC)
 	{
 		result = true;
 		cout << "PASS: Gratuitous ARP was accepted into the table" << endl << endl;
@@ -193,7 +193,7 @@ bool gratuitousResultCheck()
 		cout << "FAIL: Gratuitous ARP was NOT accepted into the table" << endl << endl;;
 	}
 
-	fingerprint = ArpFingerprint();
+	response = ResponseBehavior();
 	seenProbe = false;
 	CI->m_srcmac.__addr_u.__eth.data[5]++;
 
@@ -273,12 +273,12 @@ int main(int argc, char ** argv)
 			sleep(CI->m_sleeptime);
 
 			pthread_mutex_lock(&cbLock);
-			cout << fingerprint.toString() << endl << endl;
+			cout << response.toString() << endl << endl;
 			// Save the min and max times
-			ArpFingerprint f;
-			f.m_maxTimebetweenRequests = fingerprint.m_maxTimebetweenRequests;
-			f.m_minTimeBetweenRequests = fingerprint.m_minTimeBetweenRequests;
-			fingerprint = f;
+			ResponseBehavior f;
+			f.m_maxTimebetweenRequests = response.m_maxTimebetweenRequests;
+			f.m_minTimeBetweenRequests = response.m_minTimeBetweenRequests;
+			response = f;
 			pthread_mutex_unlock(&cbLock);
 		}
 	}
@@ -288,7 +288,7 @@ int main(int argc, char ** argv)
 		for (int i = 0; i < 660; i++)
 		{
 			pthread_mutex_lock(&cbLock);
-			fingerprint = ArpFingerprint();
+			response = ResponseBehavior();
 			seenProbe = false;
 
 			// Only reply to the 1st ARP request in this test
@@ -303,8 +303,8 @@ int main(int argc, char ** argv)
 			sleep(1);
 
 			pthread_mutex_lock(&cbLock);
-			cout << fingerprint.toString() << endl << endl;
-			if (fingerprint.arpRequests > 0 && i != 0)
+			cout << response.toString() << endl << endl;
+			if (response.arpRequests > 0 && i != 0)
 			{
 				pthread_mutex_unlock(&cbLock);
 				break;
@@ -324,7 +324,7 @@ int main(int argc, char ** argv)
 		for (int i = 0; i < 2; i++)
 		{
 			pthread_mutex_lock(&cbLock);
-			fingerprint = ArpFingerprint();
+			response = ResponseBehavior();
 			seenProbe = false;
 			pthread_mutex_unlock(&cbLock);
 
@@ -339,7 +339,7 @@ int main(int argc, char ** argv)
 			prober.SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, CI->m_srcmac, CI->m_dstport, CI->m_srcport);
 			sleep(CI->m_sleeptime);
 			pthread_mutex_lock(&cbLock);
-			cout << fingerprint.toString() << endl << endl;
+			cout << response.toString() << endl << endl;
 			pthread_mutex_unlock(&cbLock);
 
 		}
@@ -360,7 +360,7 @@ int main(int argc, char ** argv)
 		sleep(5);
 
 		pthread_mutex_lock(&cbLock);
-		fingerprint = ArpFingerprint();
+		response = ResponseBehavior();
 		seenProbe = false;
 		replyToArp = false;
 		CI->m_srcmac.__addr_u.__eth.data[5]++;

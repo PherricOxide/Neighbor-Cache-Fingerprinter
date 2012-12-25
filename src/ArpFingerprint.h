@@ -5,7 +5,7 @@
 
 #define MAX_RECORDED_REPLIES 10
 
-struct ArpFingerprint
+struct ResponseBehavior
 {
 	/* This is true if the host sends a TCP response before sending an ARP packet.
 	 This might need to be expanded more though. Linux seems to reply if the ARP entry
@@ -31,7 +31,7 @@ struct ArpFingerprint
 	uint32_t m_minTimeBetweenRequests;
 	uint32_t m_maxTimebetweenRequests;
 
-	ArpFingerprint()
+	ResponseBehavior()
 	{
 		m_maxTimebetweenRequests = 0;
 		m_minTimeBetweenRequests = ~0;
