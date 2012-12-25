@@ -28,6 +28,7 @@ void Config::LoadArgs(char ** &argv, int &argc)
 	try {
 
 		string testString = "Test to run, \n";
+		testString += "0: Generate Fingerprint.\n";
 		testString += "1: Probe with no reply.\n";
 		testString += "2: Probe reply then check timeout.\n";
 		testString += "3: Check response to gratuitous ARP.\n";
@@ -88,7 +89,7 @@ void Config::LoadArgs(char ** &argv, int &argc)
 			)
 
 			("retries",
-					po::value<int>(&m_retries)->default_value(1),
+					po::value<int>(&m_retries)->default_value(3),
 					"Depends on --test value"
 
 			)

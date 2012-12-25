@@ -5,6 +5,63 @@
 
 #define MAX_RECORDED_REPLIES 10
 
+struct ArpFingerprint
+{
+	// Number of attempts to send an ARP request if no response is given
+	int requestAttempts;
+
+	// Are the timings between retries constant? Or is there greater than 8% variation?
+	bool constantRetryTime;
+
+	// How often does the target try to send new requests to update it's cache value?
+	// When the entry is in use?
+	int referencedStaleTimeout;
+
+	// Do we see a reply before an ARP request when the cache entry becomes stale?
+	bool replyBeforeUpdate;
+
+	// Are requests to update the entry sent to the MAC of the machine instead of the bcast address?
+	bool unicastUpdate;
+
+	// TODO initial entry into the ARP table by gratuitous request or freebsd test==102
+
+	// Checks against 36 format combinations of gratuitous packets to see if the cache is updated
+	bool gratuitousUpdates[36];
+
+	ArpFingerprint() {
+		unicastUpdate = false;
+		replyBeforeUpdate = false;
+		requestAttempts = 0;
+
+		for (int i = 0; i < 36; i++)
+			gratuitousUpdates[i] = false;
+	}
+
+	std::string toString()
+	{
+		std::stringstream ss;
+		ss << "Number of ARP Requests Seen                : " << requestAttempts << std::endl;
+		ss << "Constant retry between attempts            : " << std::boolalpha << constantRetryTime << std::endl;
+		ss << "Stale timeout value                        : " << referencedStaleTimeout << std::endl;
+		ss << "Replied before ARP request                 : " << std::boolalpha << replyBeforeUpdate << std::endl;
+		ss << "Got unicast instead of bcast request       : " << std::boolalpha << unicastUpdate << std::endl;
+
+		ss << "Gratuitous probe result fingerprint        : ";
+		for (int i = 0; i < 36; i++)
+		{
+			if (gratuitousUpdates[i]) {
+				ss << "1";
+			} else {
+				ss << "0";
+			}
+		}
+
+		ss << std::endl;
+
+		return ss.str();
+	}
+};
+
 struct ResponseBehavior
 {
 	/* This is true if the host sends a TCP response before sending an ARP packet.
@@ -18,12 +75,12 @@ struct ResponseBehavior
 
 	/* Did we get unicast or multicast requests*/
 	/* TODO: Handle the case where we got some combination of both? */
-	bool unicastRequest;
+	bool unicastUpdate;
 
-	bool sawTCPResponse;
+	bool sawProbeReply;
 
 	/* Number of attempts to resolve the ARP address */
-	int arpRequests;
+	int requestAttempts;
 
 	/* Timing between ARP requests */
 	int timeBetweenRequests[MAX_RECORDED_REPLIES];
@@ -35,8 +92,8 @@ struct ResponseBehavior
 	{
 		m_maxTimebetweenRequests = 0;
 		m_minTimeBetweenRequests = ~0;
-		arpRequests = 0;
-		sawTCPResponse = false;
+		requestAttempts = 0;
+		sawProbeReply = false;
 		averageTimeBetweenRequests = -1;
 
 		for (int i = 0; i < 10; i++)
@@ -47,27 +104,27 @@ struct ResponseBehavior
 	std::string toString()
 	{
 		std::stringstream ss;
-		ss << "Number of ARP Requests Seen                : " << arpRequests << std::endl;
-		ss << "Saw TCP response                           : " << std::boolalpha << sawTCPResponse << std::endl;
+		ss << "Number of ARP Requests Seen                : " << requestAttempts << std::endl;
+		ss << "Saw TCP response                           : " << std::boolalpha << sawProbeReply << std::endl;
 
-		if (sawTCPResponse)
+		if (sawProbeReply)
 		{
 			ss << "Replied before ARP request                 : " << std::boolalpha << replyBeforeARP << std::endl;
 		}
 
-		if (arpRequests > 0)
+		if (requestAttempts > 0)
 		{
-			ss << "Got unicast instead of bcast request        : " << std::boolalpha << unicastRequest << std::endl;
+			ss << "Got unicast instead of bcast request        : " << std::boolalpha << unicastUpdate << std::endl;
 		}
 
-		if (arpRequests > 1)
+		if (requestAttempts > 1)
 		{
 			ss << "Average time between each request (ms)      : " << averageTimeBetweenRequests << std::endl;
 
 			ss << "Time between ARP attempts                   : ";
 
 
-			for (int i = 0; i < arpRequests - 1; i++)
+			for (int i = 0; i < requestAttempts - 1; i++)
 			{
 				ss << timeBetweenRequests[i] << " ";
 			}
