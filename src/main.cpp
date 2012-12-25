@@ -28,8 +28,7 @@ Prober prober;
 
 timeval lastARPReply; /* Used to compute the time between ARP requests */
 
-void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, const unsigned char *packet)
-{
+void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, const unsigned char *packet) {
 	Lock lock(&cbLock);
 
 	if (pkthdr->len < ETH_HDR_LEN)
@@ -41,8 +40,7 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 	addr_pack_eth(&dstMac, (uint8_t*)&eth->eth_dst);
 	addr_pack_eth(&srcMac, (uint8_t*)&eth->eth_src);
 
-	if (ntohs(eth->eth_type) == ETH_TYPE_ARP)
-	{
+	if (ntohs(eth->eth_type) == ETH_TYPE_ARP) {
 		/* We ignore everything before our probe has been sent */
 		if (!seenProbe)
 			return;
@@ -51,8 +49,7 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 			return;
 
 		arp_hdr *arp = (arp_hdr*)(packet + ETH_HDR_LEN);
-		if (ntohs(arp->ar_op) == ARP_OP_REQUEST)
-		{
+		if (ntohs(arp->ar_op) == ARP_OP_REQUEST) {
 			if (pkthdr->len < ETH_HDR_LEN + ARP_HDR_LEN + ARP_ETHIP_LEN)
 				return;
 
@@ -61,19 +58,14 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 			addr_pack_ip(&addr, arpRequest->ar_tpa);
 
 
-			if (addr_cmp(&addr, &CI->m_srcip) == 0)
-			{
+			if (addr_cmp(&addr, &CI->m_srcip) == 0) {
 				cout << "Got an ARP request to " << addr_ntoa(&dstMac) << " for IP " << addr_ntoa(&addr) << " from " << addr_ntoa(&srcMac) << endl;
 
-				if (addr_cmp(&dstMac, &CI->m_srcmac) == 0)
-				{
+				if (addr_cmp(&dstMac, &CI->m_srcmac) == 0) {
 					response.unicastUpdate = true;
-				}
-				else if (addr_cmp(&dstMac, &broadcastMAC) == 0) {
+				} else if (addr_cmp(&dstMac, &broadcastMAC) == 0) {
 					response.unicastUpdate = false;
-				}
-				else
-				{
+				} else {
 					cout << "WARNING: Got an ARP packet that was neither to the broadcast MAC or our probe MAC. This is unusual." << endl;
 				}
 
@@ -88,8 +80,7 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 				cout << "Time since last ARP request was " << pkthdr->ts.tv_sec  - lastARPReply.tv_sec << " seconds " << endl;
 
 
-				if (response.requestAttempts > 1 && response.requestAttempts < MAX_RECORDED_REPLIES)
-				{
+				if (response.requestAttempts > 1 && response.requestAttempts < MAX_RECORDED_REPLIES) {
 					response.timeBetweenRequests[response.requestAttempts - 2] = diff;
 
 					/* Compute the average time between requests */
@@ -98,62 +89,47 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 						sum += response.timeBetweenRequests[i];
 					response.averageTimeBetweenRequests = sum / (response.requestAttempts - 1);
 
-					if (diff > response.m_maxTimebetweenRequests)
-					{
+					if (diff > response.m_maxTimebetweenRequests) {
 						response.m_maxTimebetweenRequests = diff;
 					}
-					if (diff < response.m_minTimeBetweenRequests)
-					{
+					if (diff < response.m_minTimeBetweenRequests) {
 						response.m_minTimeBetweenRequests = diff;
 					}
 				}
 				lastARPReply = pkthdr->ts;
 			}
 		}
-	}
-	else if (ntohs(eth->eth_type) == ETH_TYPE_IP)
-	{
+	} else if (ntohs(eth->eth_type) == ETH_TYPE_IP) {
 		if (pkthdr->len < ETH_HDR_LEN + IP_HDR_LEN)
 			return;
 
 		ip_hdr *ip = (ip_hdr*)(packet + ETH_HDR_LEN);
 
 		/* Check if our own probe packet went over the interface */
-		if (!seenProbe)
-		{
+		if (!seenProbe) {
 			Lock lock(&prober.probeBufferLock);
 			if (pkthdr->len != prober.probeBufferSize)
 				return;
 
-			for (int i = 0; i < pkthdr->len; i++)
-			{
+			for (int i = 0; i < pkthdr->len; i++) {
 				if (packet[i] != prober.probeBuffer[i])
-				{
 					return;
-				}
 			}
 
 			seenProbe = true;
 			//cout << "Packet capture thread has seen probe packet go out" << endl;
-		}
-		else
-		{
+		} else {
 			addr dstIp, srcIp;
 			addr_pack_ip(&dstIp, (uint8_t*)&ip->ip_dst);
 			addr_pack_ip(&srcIp, (uint8_t*)&ip->ip_src);
 
 
-			if (addr_cmp(&dstIp, &CI->m_srcip) == 0)
-			{
-				if (addr_cmp(&dstMac, &CI->m_srcmac) == 0)
-				{
+			if (addr_cmp(&dstIp, &CI->m_srcip) == 0) {
+				if (addr_cmp(&dstMac, &CI->m_srcmac) == 0) {
 					response.replyToCorrectMAC = true;
-				}
-				else
-				{
+				} else {
 					response.replyToCorrectMAC = false;
 				}
-
 
 				cout << "Saw a probe response to " << addr_ntoa(&dstIp) << " / " << addr_ntoa(&dstMac) << " from " << addr_ntoa(&srcIp) << " / " << addr_ntoa(&srcMac) << endl;
 				response.sawProbeReply = true;
@@ -169,27 +145,22 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 
 
 // This is used in the gratuitous ARP test for checking the result
-bool gratuitousResultCheck()
-{
+bool gratuitousResultCheck() {
 	bool result;
 
 	prober.SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, origSrcMac, CI->m_dstport, CI->m_srcport);
 	sleep(1);
 
 	pthread_mutex_lock(&cbLock);
-	if (!response.sawProbeReply)
-	{
+	if (!response.sawProbeReply) {
 		cout << "WARNING: Saw no probe response! Unable to perform test." << endl;
 		//exit(1);
 	}
 
-	if (response.replyToCorrectMAC)
-	{
+	if (response.replyToCorrectMAC) {
 		result = true;
 		cout << "PASS: Gratuitous ARP was accepted into the table" << endl << endl;
-	}
-	else
-	{
+	} else {
 		result = false;
 		cout << "FAIL: Gratuitous ARP was NOT accepted into the table" << endl << endl;;
 	}
@@ -204,8 +175,7 @@ bool gratuitousResultCheck()
 
 void checkInitialQueryBehavior()
 {
-	for (int i = 0; i < CI->m_retries; i++)
-	{
+	for (int i = 0; i < CI->m_retries; i++) {
 		prober.SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, CI->m_srcmac, CI->m_dstport, CI->m_srcport);
 		sleep(CI->m_sleeptime);
 
@@ -213,14 +183,12 @@ void checkInitialQueryBehavior()
 		cout << response.toString() << endl << endl;
 
 		// Reset response if this isn't the last test
-		if (i != CI->m_retries - 1)
-		{
+		if (i != CI->m_retries - 1) {
 			// Save the min and max times
 			ResponseBehavior f;
 			f.m_maxTimebetweenRequests = response.m_maxTimebetweenRequests;
 			f.m_minTimeBetweenRequests = response.m_minTimeBetweenRequests;
 			response = f;
-
 		}
 		pthread_mutex_unlock(&cbLock);
 	}
@@ -239,13 +207,11 @@ void checkInitialQueryBehavior()
 	}
 }
 
-void checkStaleTiming()
-{
+void checkStaleTiming() {
 	// TODO: What do we do about the max for this? Could take 20 mins on freebsd
 	// For now we just go up to a max of 1 min?
 	int i;
-	for (i = 0; i < 60; i++)
-	{
+	for (i = 0; i < 60; i++) {
 		pthread_mutex_lock(&cbLock);
 		response = ResponseBehavior();
 		seenProbe = false;
@@ -263,8 +229,7 @@ void checkStaleTiming()
 
 		pthread_mutex_lock(&cbLock);
 		cout << response.toString() << endl << endl;
-		if (response.requestAttempts > 0 && i != 0)
-		{
+		if (response.requestAttempts > 0 && i != 0) {
 			break;
 		}
 		pthread_mutex_unlock(&cbLock);
@@ -277,8 +242,7 @@ void checkStaleTiming()
 	pthread_mutex_unlock(&cbLock);
 }
 
-void checkGratuitousBehavior()
-{
+void checkGratuitousBehavior() {
 	origSrcMac = CI->m_srcmac;
 
 	pthread_mutex_lock(&cbLock);
@@ -303,14 +267,10 @@ void checkGratuitousBehavior()
 
 	stringstream result;
 	// Try for both ARP request and ARP reply opcodes
-	for (int arpOpCode = 2; arpOpCode > 0; arpOpCode--)
-	{
-		for (int macDestination = 0; macDestination < 2; macDestination++)
-		{
-			for (int tpa = 0; tpa < 3; tpa++)
-			{
-				for (int tha = 0; tha < 3; tha++)
-				{
+	for (int arpOpCode = 2; arpOpCode > 0; arpOpCode--) {
+		for (int macDestination = 0; macDestination < 2; macDestination++) {
+			for (int tpa = 0; tpa < 3; tpa++) {
+				for (int tha = 0; tha < 3; tha++){
 					addr tpaAddress;
 					if (tpa == 0) {
 						tpaAddress = zeroIP;
@@ -345,8 +305,7 @@ void checkGratuitousBehavior()
 					result << testResult;
 					probeTestNumber++;
 
-					if (probeTestNumber > 36)
-					{
+					if (probeTestNumber > 36) {
 						cout << "ERROR: Invalid gratuitous probe number!" << endl;
 						exit(1);
 					}
@@ -356,8 +315,7 @@ void checkGratuitousBehavior()
 		}
 	}
 
-	for (int i = 0; i < 36; i++)
-	{
+	for (int i = 0; i < 36; i++) {
 		fingerprint.gratuitousUpdates[i] = results[i];
 	}
 
@@ -400,40 +358,34 @@ int main(int argc, char ** argv)
 
 	// This one doesn't update ARP tables on Linux 2.6 but seems to work in Linux 3.x.
 	// The rest all work to update the table but not to create new entry in Linux.
-	if (CI->m_test == 100)
-	{
+	if (CI->m_test == 100) {
 		prober.SendARPReply(&CI->m_srcmac, &broadcastMAC, &CI->m_srcip, &CI->m_srcip);
 		return 0;
 	}
 
-	if (CI->m_test == 101)
-	{
+	if (CI->m_test == 101) {
 		prober.SendARPReply(&CI->m_srcmac, &broadcastMAC, &CI->m_srcip, (addr*)&zeroIP);
 		return 0;
 	}
 
 	// This one adds an entry to the ARP table in FreeBSD
-	if (CI->m_test == 102)
-	{
+	if (CI->m_test == 102) {
 		prober.SendARPReply(&CI->m_srcmac, &CI->m_dstmac, &CI->m_srcip, &CI->m_dstip);
 		return 0;
 	}
 
-	if (CI->m_test == 103)
-	{
+	if (CI->m_test == 103) {
 		prober.SendARPReply(&CI->m_srcmac, &CI->m_dstmac, &CI->m_srcip, (addr*)&zeroIP);
 		return 0;
 	}
 
-	if (CI->m_test == 200)
-	{
+	if (CI->m_test == 200) {
 		prober.SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, CI->m_srcmac, CI->m_dstport, CI->m_srcport);
 		return 0;
 	}
 
 
-	if (CI->m_test == 0)
-	{
+	if (CI->m_test == 0) {
 		checkInitialQueryBehavior();
 		checkStaleTiming();
 		checkGratuitousBehavior();
@@ -442,13 +394,11 @@ int main(int argc, char ** argv)
 		cout << fingerprint.toString() << endl;
 	}
 
-	if (CI->m_test == 1)
-	{
+	if (CI->m_test == 1) {
 		checkInitialQueryBehavior();
 	}
 
-	if (CI->m_test == 2)
-	{
+	if (CI->m_test == 2) {
 		checkStaleTiming();
 	}
 
@@ -460,8 +410,7 @@ int main(int argc, char ** argv)
 		 * be replied to followed by ARP requests. Windows 7 at least will ignore the gratuitous ARP packet
 		 * entirely and not exhibit the same behavior.
 		*/
-		for (int i = 0; i < 2; i++)
-		{
+		for (int i = 0; i < 2; i++) {
 			pthread_mutex_lock(&cbLock);
 			response = ResponseBehavior();
 			seenProbe = false;
@@ -484,13 +433,11 @@ int main(int argc, char ** argv)
 		}
 	}
 
-	if (CI->m_test == 4)
-	{
+	if (CI->m_test == 4) {
 		checkGratuitousBehavior();
 	}
 
 
 	return 0;
 }
-
 

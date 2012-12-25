@@ -9,4 +9,5 @@ ncf_SOURCES = FilePacketCapture.cpp \
 		Config.cpp \
 		Probes.cpp \
 		helpers.cpp \
+		ArpFingerprint.cpp \
 		main.cpp

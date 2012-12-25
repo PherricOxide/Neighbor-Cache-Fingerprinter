@@ -12,21 +12,16 @@ Config *Config::m_config = NULL;
 Config::Config() {};
 
 Config* Config::Inst() {
-	if (Config::m_config == NULL)
-	{
+	if (Config::m_config == NULL) {
 		Config::m_config = new Config();
-	}
-	else
-	{
+	} else {
 		return Config::m_config;
 	}
 }
 
-void Config::LoadArgs(char ** &argv, int &argc)
-{
+void Config::LoadArgs(char ** &argv, int &argc) {
 	po::options_description desc("Allowed options");
 	try {
-
 		string testString = "Test to run, \n";
 		testString += "0: Generate Fingerprint.\n";
 		testString += "1: Probe with no reply.\n";
@@ -139,14 +134,9 @@ void Config::LoadArgs(char ** &argv, int &argc)
 			addr_pack(&m_dstmac, ADDR_TYPE_ETH, ETH_ADDR_BITS, dstMac, ETH_ADDR_LEN);
 		}
 
-	} catch(exception &e)
-	{
+	} catch(exception &e) {
 		cout << "Uncaught exception: " << string(e.what()) << endl;
 		cout << endl << desc << endl;
 		exit(1);
 	}
 }
-
-
-
-

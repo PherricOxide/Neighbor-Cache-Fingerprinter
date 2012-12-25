@@ -2,11 +2,14 @@
 #define ARPFINGERPRINT_H
 
 #include <sstream>
+#include <stdint.h>
 
 #define MAX_RECORDED_REPLIES 10
 
-struct ArpFingerprint
+class ArpFingerprint
 {
+public:
+
 	// Number of attempts to send an ARP request if no response is given
 	int requestAttempts;
 
@@ -28,38 +31,8 @@ struct ArpFingerprint
 	// Checks against 36 format combinations of gratuitous packets to see if the cache is updated
 	bool gratuitousUpdates[36];
 
-	ArpFingerprint() {
-		unicastUpdate = false;
-		replyBeforeUpdate = false;
-		requestAttempts = 0;
-
-		for (int i = 0; i < 36; i++)
-			gratuitousUpdates[i] = false;
-	}
-
-	std::string toString()
-	{
-		std::stringstream ss;
-		ss << "Number of ARP Requests Seen                : " << requestAttempts << std::endl;
-		ss << "Constant retry between attempts            : " << std::boolalpha << constantRetryTime << std::endl;
-		ss << "Stale timeout value                        : " << referencedStaleTimeout << std::endl;
-		ss << "Replied before ARP request                 : " << std::boolalpha << replyBeforeUpdate << std::endl;
-		ss << "Got unicast instead of bcast request       : " << std::boolalpha << unicastUpdate << std::endl;
-
-		ss << "Gratuitous probe result fingerprint        : ";
-		for (int i = 0; i < 36; i++)
-		{
-			if (gratuitousUpdates[i]) {
-				ss << "1";
-			} else {
-				ss << "0";
-			}
-		}
-
-		ss << std::endl;
-
-		return ss.str();
-	}
+	ArpFingerprint();
+	std::string toString();
 };
 
 struct ResponseBehavior
@@ -104,13 +77,18 @@ struct ResponseBehavior
 	std::string toString()
 	{
 		std::stringstream ss;
-		ss << "Number of ARP Requests Seen                : " << requestAttempts << std::endl;
-		ss << "Saw Probe response                         : " << std::boolalpha << sawProbeReply << std::endl;
+		ss << "Saw reply to probe                            : " << std::boolalpha << sawProbeReply << std::endl;
 
-		if (sawProbeReply)
+		if (requestAttempts > 0)
 		{
-			ss << "Replied before ARP request                 : " << std::boolalpha << replyBeforeARP << std::endl;
+			ss << "Number of ARP Requests Seen                : " << requestAttempts << std::endl;
+
+			if (sawProbeReply) {
+				ss << "Replied before ARP request                 : " << std::boolalpha << replyBeforeARP << std::endl;
+			}
+
 		}
+
 
 		if (requestAttempts > 0)
 		{

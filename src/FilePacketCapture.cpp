@@ -23,18 +23,15 @@ using namespace std;
 namespace Nova
 {
 
-FilePacketCapture::FilePacketCapture(string pcapFilePath)
-{
+FilePacketCapture::FilePacketCapture(string pcapFilePath) {
 	m_pcapFilePath = pcapFilePath;
 	m_identifier = pcapFilePath;
 }
 
-void FilePacketCapture::Init()
-{
+void FilePacketCapture::Init() {
 	m_handle = pcap_open_offline(m_pcapFilePath.c_str(), m_errorbuf);
 
-	if (m_handle == NULL)
-	{
+	if (m_handle == NULL) {
 		throw PacketCaptureException(string("pcap_open_offline failed with error: ") + string(m_errorbuf));
 	}
 }

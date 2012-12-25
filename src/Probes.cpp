@@ -6,8 +6,7 @@
 
 using namespace std;
 
-Prober::Prober()
-{
+Prober::Prober() {
 	pthread_mutex_init(&probeBufferLock, NULL);
 }
 
@@ -24,8 +23,7 @@ void Prober::SendSYN(
 	pthread_mutex_unlock(&probeBufferLock);
 
 	eth_t *eth = eth_open(CI->m_interface.c_str());
-	if (eth == NULL)
-	{
+	if (eth == NULL) {
 		cout << "Unable to open ethernet interface to send TCP SYN" << endl;
 		return;
 	}
@@ -40,8 +38,7 @@ void Prober::SendARPReply(
 		struct addr *srcMAC, struct addr *dstMAC, struct addr *srcIP, struct addr *dstIP, int opcode, struct addr *tha)
 {
 	// Usually tha is going to be the destination MAC, except for weird cases with gratuitous replies
-	if (tha == NULL)
-	{
+	if (tha == NULL) {
 		tha = dstMAC;
 	}
     u_char pkt[ETH_HDR_LEN + ARP_HDR_LEN + ARP_ETHIP_LEN];
@@ -51,22 +48,16 @@ void Prober::SendARPReply(
         srcIP->addr_ip, tha->addr_eth, dstIP->addr_ip);
 
 	eth_t *eth = eth_open(CI->m_interface.c_str());
-	if (eth == NULL)
-	{
+	if (eth == NULL) {
 		cout << "Unable to open ethernet interface to send TCP SYN" << endl;
 		return;
 	}
 
-	if (opcode == ARP_OP_REPLY)
-	{
+	if (opcode == ARP_OP_REPLY) {
 		cout << "Sending ARP_REPLY to ";
-	}
-	else if (opcode == ARP_OP_REQUEST)
-	{
+	} else if (opcode == ARP_OP_REQUEST) {
 		cout << "Sending ARP_REQUEST to ";
-	}
-	else
-	{
+	} else {
 		cout << "ERROR: Invalid ARP op code" << endl;
 	}
 
