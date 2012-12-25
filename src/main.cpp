@@ -155,7 +155,7 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 				}
 
 
-				cout << "Saw a TCP response to " << addr_ntoa(&dstIp) << " / " << addr_ntoa(&dstMac) << " from " << addr_ntoa(&srcIp) << " / " << addr_ntoa(&srcMac) << endl;
+				cout << "Saw a probe response to " << addr_ntoa(&dstIp) << " / " << addr_ntoa(&dstMac) << " from " << addr_ntoa(&srcIp) << " / " << addr_ntoa(&srcMac) << endl;
 				response.sawProbeReply = true;
 				if (response.requestAttempts == 0)
 					response.replyBeforeARP = true;
@@ -179,7 +179,7 @@ bool gratuitousResultCheck()
 	pthread_mutex_lock(&cbLock);
 	if (!response.sawProbeReply)
 	{
-		cout << "WARNING: Saw no TCP response! Unable to perform test." << endl;
+		cout << "WARNING: Saw no probe response! Unable to perform test." << endl;
 		//exit(1);
 	}
 
@@ -455,7 +455,7 @@ int main(int argc, char ** argv)
 	if (CI->m_test == 3) {
 		/*
 		 * We run this test twice to note a neat difference between Windows and Linux.
-		 * In Linux, the first TCP packet will cause the SYN/RST to put an entry in the ARP table, which will be
+		 * In Linux, the first probe packet will cause the SYN/RST to put an entry in the ARP table, which will be
 		 * set to FAIL state and then updated to STALE when it sees the gratuitous ARP, causing the 2nd probe to
 		 * be replied to followed by ARP requests. Windows 7 at least will ignore the gratuitous ARP packet
 		 * entirely and not exhibit the same behavior.

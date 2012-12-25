@@ -64,13 +64,13 @@ struct ArpFingerprint
 
 struct ResponseBehavior
 {
-	/* This is true if the host sends a TCP response before sending an ARP packet.
+	/* This is true if the host sends a probe reply before sending an ARP packet.
 	 This might need to be expanded more though. Linux seems to reply if the ARP entry
 	 is in the ARP cache but has become stale, but not if it isn't in the cache at all */
 	bool replyBeforeARP;
 
 
-	/* Was the TCP reply to the MAC address we last announced? */
+	/* Was the probe reply to the MAC address we last announced? */
 	bool replyToCorrectMAC;
 
 	/* Did we get unicast or multicast requests*/
@@ -105,7 +105,7 @@ struct ResponseBehavior
 	{
 		std::stringstream ss;
 		ss << "Number of ARP Requests Seen                : " << requestAttempts << std::endl;
-		ss << "Saw TCP response                           : " << std::boolalpha << sawProbeReply << std::endl;
+		ss << "Saw Probe response                         : " << std::boolalpha << sawProbeReply << std::endl;
 
 		if (sawProbeReply)
 		{
