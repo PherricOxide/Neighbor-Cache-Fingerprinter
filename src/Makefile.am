@@ -2,12 +2,22 @@ AM_CFLAGS = --pedantic -Wall -std=c11 -O0
 
 bin_PROGRAMS = ncf
 
-LDADD = -lpcap -lpthread -ldumbnet -lboost_program_options
-ncf_SOURCES = FilePacketCapture.cpp \
+ncf_LDADD = -lpcap -lpthread -ldumbnet -lboost_program_options
+
+SOURCES = FilePacketCapture.cpp \
 		InterfacePacketCapture.cpp \
 		PacketCapture.cpp \
 		Config.cpp \
 		Probes.cpp \
 		helpers.cpp \
-		ArpFingerprint.cpp \
-		main.cpp
+		ArpFingerprint.cpp
+
+ncf_SOURCES = $(SOURCES) main.cpp
+
+## Unit tests
+check_PROGRAMS = test
+
+test_SOURCES  = $(SOURCES) TEST.cc
+test_LDADD    = $(ncf_LDADD) -lgtest
+
+TESTS = test

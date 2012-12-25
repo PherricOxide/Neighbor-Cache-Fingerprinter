@@ -391,7 +391,8 @@ int main(int argc, char ** argv)
 		checkGratuitousBehavior();
 
 		cout << "FINGERPRINT FOLLOWS" << endl;
-		cout << fingerprint.toString() << endl;
+		cout << fingerprint.toString() << endl << endl;
+		cout << fingerprint.toTinyString() << endl;
 	}
 
 	if (CI->m_test == 1) {

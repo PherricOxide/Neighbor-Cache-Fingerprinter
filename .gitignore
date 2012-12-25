@@ -16,3 +16,4 @@ src/ncf
 config.log
 /src/.cproject
 /src/.project
+/src/test

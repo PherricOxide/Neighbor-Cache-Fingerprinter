@@ -32,7 +32,11 @@ public:
 	bool gratuitousUpdates[36];
 
 	ArpFingerprint();
+	ArpFingerprint(std::string tinyString);
 	std::string toString();
+	std::string toTinyString();
+	bool operator==(const ArpFingerprint &rhs) const;
+	bool operator!=(const ArpFingerprint &rhs) const;
 };
 
 struct ResponseBehavior
