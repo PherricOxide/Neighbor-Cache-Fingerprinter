@@ -24,8 +24,13 @@ TEST_F(ArpFingerprintTest, test_tinyStringification)
 	ArpFingerprint foo;
 	foo.requestAttempts = 42;
 	foo.constantRetryTime = true;
-	foo.gratuitousUpdates[3] = true;
-	foo.gratuitousUpdates[2] = false;
+	for (int i = 0; i < 36; i++)
+	{
+		if (i %2 == 0)
+			foo.gratuitousUpdates[i] = false;
+		else
+			foo.gratuitousUpdates[i] = true;
+	}
 	foo.unicastUpdate = false;
 	foo.replyBeforeUpdate = true;
 	foo.referencedStaleTimeout = 108;

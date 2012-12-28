@@ -10,7 +10,8 @@ SOURCES = FilePacketCapture.cpp \
 		Config.cpp \
 		Probes.cpp \
 		helpers.cpp \
-		ArpFingerprint.cpp
+		ArpFingerprint.cpp \
+		Fingerprinter.cpp
 
 ncf_SOURCES = $(SOURCES) main.cpp
 

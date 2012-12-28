@@ -16,6 +16,7 @@ public:
 	int m_test;
 
 	std::string m_srcipString, m_dstipString;
+	std::string m_fingerprintFile;
 	addr m_srcip, m_dstip;
 	addr m_srcmac, m_dstmac;
 	int m_srcport, m_dstport;

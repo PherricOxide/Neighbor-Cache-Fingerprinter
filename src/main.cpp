@@ -5,6 +5,7 @@
 #include <pthread.h>
 
 #include "InterfacePacketCapture.h"
+#include "Fingerprinter.h"
 #include "ArpFingerprint.h"
 #include "Config.h"
 #include "Probes.h"
@@ -149,7 +150,7 @@ bool gratuitousResultCheck() {
 	bool result;
 
 	prober.SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, origSrcMac, CI->m_dstport, CI->m_srcport);
-	sleep(1);
+	usleep(1000000);
 
 	pthread_mutex_lock(&cbLock);
 	if (!response.sawProbeReply) {
@@ -182,6 +183,14 @@ void checkInitialQueryBehavior()
 		pthread_mutex_lock(&cbLock);
 		cout << response.toString() << endl << endl;
 
+		// TODO we save the requestAttempts from the first ARP. On android this changes
+		// from 2 to 1 on the second retry, which we should add as a fingerprint feature
+		if (i == 0)
+		{
+			fingerprint.requestAttempts = response.requestAttempts;
+		}
+
+
 		// Reset response if this isn't the last test
 		if (i != CI->m_retries - 1) {
 			// Save the min and max times
@@ -199,7 +208,6 @@ void checkInitialQueryBehavior()
 	double percentDifference = 100*difference/response.m_minTimeBetweenRequests;
 	cout << "Timing range difference of " << percentDifference << endl;
 
-	fingerprint.requestAttempts = response.requestAttempts;
 	if (percentDifference > 8) {
 		fingerprint.constantRetryTime = false;
 	} else {
@@ -299,17 +307,31 @@ void checkGratuitousBehavior() {
 					}
 
 					prober.SendARPReply(&CI->m_srcmac, &destinationMac, &CI->m_srcip, &tpaAddress, arpOpCode, &thaAddress);
-					sleep(1);
+					usleep(1000000);
 
 					bool testResult = gratuitousResultCheck();
 					result << testResult;
-					probeTestNumber++;
 
-					if (probeTestNumber > 36) {
+					if (probeTestNumber >= 36) {
 						cout << "ERROR: Invalid gratuitous probe number!" << endl;
 						exit(1);
 					}
+
 					results[probeTestNumber] = testResult;
+					probeTestNumber++;
+
+
+					// Helps reset the neighbor cache's entry state to reachable for each test
+					if (true || probeTestNumber % 10 == 0)
+					{
+						prober.SendARPReply(&origSrcMac, &CI->m_dstmac, &CI->m_srcip, &CI->m_dstip);
+						sleep(3);
+						pthread_mutex_lock(&cbLock);
+						response = ResponseBehavior();
+						seenProbe = false;
+						pthread_mutex_unlock(&cbLock);
+
+					}
 				}
 			}
 		}
@@ -326,6 +348,10 @@ void checkGratuitousBehavior() {
 int main(int argc, char ** argv)
 {
 	Config::Inst()->LoadArgs(argv, argc);
+
+	// Load the fingerprints
+	Fingerprinter fingerprinter;
+	fingerprinter.LoadFingerprints();
 
 	/* Stuff the broadcast MAC in an addr type for comparison later */
 	unsigned char broadcastBuffer[ETH_ADDR_LEN] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
@@ -388,11 +414,14 @@ int main(int argc, char ** argv)
 	if (CI->m_test == 0) {
 		checkInitialQueryBehavior();
 		checkStaleTiming();
+		sleep(3);
 		checkGratuitousBehavior();
 
 		cout << "FINGERPRINT FOLLOWS" << endl;
 		cout << fingerprint.toString() << endl << endl;
 		cout << fingerprint.toTinyString() << endl;
+
+		cout << fingerprinter.GetMatchReport(fingerprint) << endl;
 	}
 
 	if (CI->m_test == 1) {

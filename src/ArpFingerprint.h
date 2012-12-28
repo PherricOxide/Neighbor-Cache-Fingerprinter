@@ -3,12 +3,14 @@
 
 #include <sstream>
 #include <stdint.h>
+#include <string>
 
 #define MAX_RECORDED_REPLIES 10
 
 class ArpFingerprint
 {
 public:
+	std::string name;
 
 	// Number of attempts to send an ARP request if no response is given
 	int requestAttempts;

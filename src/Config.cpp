@@ -88,6 +88,12 @@ void Config::LoadArgs(char ** &argv, int &argc) {
 					"Depends on --test value"
 
 			)
+
+			("fingerprints",
+					po::value<string>(&m_fingerprintFile)->default_value("fingerprints.txt"),
+					"Path to the fingerprints file"
+			)
+
 		;
 
 		po::variables_map vm;
