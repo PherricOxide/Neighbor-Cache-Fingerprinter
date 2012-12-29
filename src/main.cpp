@@ -508,6 +508,35 @@ int main(int argc, char ** argv)
 
 	}
 
+	// Should already be in the ARP table
+	if (CI->m_test == 6) {
+		int start;
+		for (int i = 15; i < 30; i++) {
+			start = CI->m_srcmac.__addr_u.__eth.data[5];
+
+			chooseNewSourceMac();
+			prober.SendARPReply(&CI->m_srcmac, &CI->m_dstmac, &CI->m_srcip, &CI->m_dstip);
+			usleep(i*50000);
+			cout << "Delay was (ms): " << i*50 << endl;
+			chooseNewSourceMac();
+			prober.SendARPReply(&CI->m_srcmac, &CI->m_dstmac, &CI->m_srcip, &CI->m_dstip);
+
+			pthread_mutex_lock(&cbLock);
+			response = ResponseBehavior();
+			seenProbe = false;
+			pthread_mutex_unlock(&cbLock);
+
+			prober.Probe();
+
+			sleep(2);
+			pthread_mutex_lock(&cbLock);
+			cout << "Reply was to " << addr_ntoa(&response.dstMac) << endl;
+			cout << "count was " << response.dstMac.__addr_u.__eth.data[5] - start << endl;
+			pthread_mutex_unlock(&cbLock);
+
+		}
+	}
+
 
 	return 0;
 }
