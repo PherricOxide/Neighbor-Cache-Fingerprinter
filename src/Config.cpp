@@ -44,22 +44,22 @@ void Config::LoadArgs(char ** &argv, int &argc) {
 			)
 
 			("srcip",
-				po::value<std::string>(&m_srcipString)->default_value("192.168.0.42"),
+				po::value<std::string>(&m_srcipString),
 				"Source IP address"
 			)
 			
 			("dstip", 
-				po::value<std::string>(&m_dstipString)->default_value("192.168.0.100"),
+				po::value<std::string>(&m_dstipString),
 				"Destination IP address"
 			)
 
 			("srcmac", 
-				po::value<std::string>()->default_value("BA:BE:BA:BE:CA:FE"),
+				po::value<std::string>()->default_value("BA:BE:CA:FE:00:00"),
 				"Source MAC Address"
 			)
 			
 			("dstmac",
-				po::value<std::string>()->default_value("38:60:77:20:CC:50"),
+				po::value<std::string>(),
 				"Destination MAC Address"
 			)
 
@@ -69,7 +69,7 @@ void Config::LoadArgs(char ** &argv, int &argc) {
 			)
 
 			("dstport",
-					po::value<int>(&m_dstport)->default_value(139),
+					po::value<int>(&m_dstport)->default_value(333),
 					"Destination Port"
 			)
 
