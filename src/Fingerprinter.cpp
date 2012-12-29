@@ -34,7 +34,7 @@ void Fingerprinter::LoadFingerprints() {
 				fingerprint.name = fingerprintName;
 				m_fingerprints.push_back(fingerprint);
 				//cout << "Loading   " << line << endl;
-				//cout << "Loaded in " << fingerprint.toTinyString() << endl;
+				//cout << "Loaded in " << fingerprint.toTinyString() << endl << endl;
 			}
 		}
 		fingerprintFile.close();

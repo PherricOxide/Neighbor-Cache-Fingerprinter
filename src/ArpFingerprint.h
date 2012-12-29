@@ -85,6 +85,7 @@ struct ResponseBehavior
 		replyToCorrectMAC = false;
 		replyBeforeARP = false;
 		averageTimeBetweenRequests = -1;
+		unicastUpdate = false;
 
 		for (int i = 0; i < 10; i++)
 			timeBetweenRequests[i] = -1;
