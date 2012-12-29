@@ -22,7 +22,8 @@ protected:
 TEST_F(ArpFingerprintTest, test_tinyStringification)
 {
 	ArpFingerprint foo;
-	foo.requestAttempts = 42;
+	foo.requestAttemptsMin = 1;
+	foo.requestAttemptsMax = 3;
 	foo.constantRetryTime = true;
 	for (int i = 0; i < 36; i++)
 	{

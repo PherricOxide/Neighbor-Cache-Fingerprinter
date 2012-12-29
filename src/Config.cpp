@@ -44,12 +44,12 @@ void Config::LoadArgs(char ** &argv, int &argc) {
 			)
 
 			("srcip",
-				po::value<std::string>(&m_srcipString),
+				po::value<std::string>(&m_srcipString)->required(),
 				"Source IP address"
 			)
 			
 			("dstip", 
-				po::value<std::string>(&m_dstipString),
+				po::value<std::string>(&m_dstipString)->required(),
 				"Destination IP address"
 			)
 
@@ -59,7 +59,7 @@ void Config::LoadArgs(char ** &argv, int &argc) {
 			)
 			
 			("dstmac",
-				po::value<std::string>(),
+				po::value<std::string>()->required(),
 				"Destination MAC Address"
 			)
 

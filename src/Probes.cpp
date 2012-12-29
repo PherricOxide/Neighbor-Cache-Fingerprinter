@@ -10,6 +10,11 @@ Prober::Prober() {
 	pthread_mutex_init(&probeBufferLock, NULL);
 }
 
+void Prober::Probe() {
+	// TODO: Support multiple types of probes
+	SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, CI->m_srcmac, CI->m_dstport, CI->m_srcport);
+}
+
 void Prober::SendSYN(
 		addr dstIP, addr dstMAC,
 		addr srcIP, addr srcMAC,

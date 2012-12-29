@@ -1,6 +1,9 @@
 #ifndef ARPFINGERPRINT_H
 #define ARPFINGERPRINT_H
 
+
+#include <dumbnet.h>
+
 #include <sstream>
 #include <stdint.h>
 #include <string>
@@ -13,7 +16,11 @@ public:
 	std::string name;
 
 	// Number of attempts to send an ARP request if no response is given
-	int requestAttempts;
+	int requestAttemptsMin;
+	int requestAttemptsMax;
+
+	int minTimeBetweenRetries;
+	int maxTimeBetweenRetries;
 
 	// Are the timings between retries constant? Or is there greater than 8% variation?
 	bool constantRetryTime;
@@ -67,12 +74,16 @@ struct ResponseBehavior
 	uint32_t m_minTimeBetweenRequests;
 	uint32_t m_maxTimebetweenRequests;
 
+	addr dstMac;
+
 	ResponseBehavior()
 	{
 		m_maxTimebetweenRequests = 0;
 		m_minTimeBetweenRequests = ~0;
 		requestAttempts = 0;
 		sawProbeReply = false;
+		replyToCorrectMAC = false;
+		replyBeforeARP = false;
 		averageTimeBetweenRequests = -1;
 
 		for (int i = 0; i < 10; i++)

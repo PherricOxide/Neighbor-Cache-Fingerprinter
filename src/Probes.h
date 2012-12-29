@@ -9,6 +9,7 @@ public:
 	pthread_mutex_t probeBufferLock;
 
 	Prober();
+	void Probe();
 
 	void SendARPReply(struct addr *srcMAC, struct addr *dstMAC, struct addr *srcIP, struct addr *dstIP, int opcode = ARP_OP_REPLY, struct addr *tha = NULL);
 

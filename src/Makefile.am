@@ -1,5 +1,6 @@
 AM_CFLAGS = --pedantic -Wall -std=c11 -O0
 
+## TODO Move ncf up a folder (doing so with automake confuses me, will look into it later)
 bin_PROGRAMS = ncf
 
 ncf_LDADD = -lpcap -lpthread -ldumbnet -lboost_program_options

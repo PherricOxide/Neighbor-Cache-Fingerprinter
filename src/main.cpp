@@ -29,6 +29,11 @@ Prober prober;
 
 timeval lastARPReply; /* Used to compute the time between ARP requests */
 
+// TODO: Do this a better way (don't loop at 255, don't use addr internals)
+void chooseNewSourceMac() {
+	CI->m_srcmac.__addr_u.__eth.data[5]++;
+}
+
 void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, const unsigned char *packet) {
 	Lock lock(&cbLock);
 
@@ -126,6 +131,7 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 
 
 			if (addr_cmp(&dstIp, &CI->m_srcip) == 0) {
+				response.dstMac = dstMac;
 				if (addr_cmp(&dstMac, &CI->m_srcmac) == 0) {
 					response.replyToCorrectMAC = true;
 				} else {
@@ -168,7 +174,7 @@ bool gratuitousResultCheck() {
 
 	response = ResponseBehavior();
 	seenProbe = false;
-	CI->m_srcmac.__addr_u.__eth.data[5]++;
+	chooseNewSourceMac();
 
 	pthread_mutex_unlock(&cbLock);
 	return result;
@@ -177,19 +183,20 @@ bool gratuitousResultCheck() {
 void checkInitialQueryBehavior()
 {
 	for (int i = 0; i < CI->m_retries; i++) {
-		prober.SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, CI->m_srcmac, CI->m_dstport, CI->m_srcport);
+		prober.Probe();
 		sleep(CI->m_sleeptime);
 
 		pthread_mutex_lock(&cbLock);
 		cout << response.toString() << endl << endl;
 
-		// TODO we save the requestAttempts from the first ARP. On android this changes
-		// from 2 to 1 on the second retry, which we should add as a fingerprint feature
-		if (i == 0)
-		{
-			fingerprint.requestAttempts = response.requestAttempts;
+
+		if (response.requestAttempts > fingerprint.requestAttemptsMax) {
+			fingerprint.requestAttemptsMax = response.requestAttempts;
 		}
 
+		if (response.requestAttempts < fingerprint.requestAttemptsMin){
+			fingerprint.requestAttemptsMin = response.requestAttempts;
+		}
 
 		// Reset response if this isn't the last test
 		if (i != CI->m_retries - 1) {
@@ -213,6 +220,9 @@ void checkInitialQueryBehavior()
 	} else {
 		fingerprint.constantRetryTime = true;
 	}
+
+	fingerprint.maxTimeBetweenRetries = response.m_maxTimebetweenRequests;
+	fingerprint.minTimeBetweenRetries = response.m_minTimeBetweenRequests;
 }
 
 void checkStaleTiming() {
@@ -231,7 +241,7 @@ void checkStaleTiming() {
 			replyToArp = false;
 		pthread_mutex_unlock(&cbLock);
 
-		prober.SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, CI->m_srcmac, CI->m_dstport, CI->m_srcport);
+		prober.Probe();
 
 		sleep(1);
 
@@ -259,7 +269,7 @@ void checkGratuitousBehavior() {
 
 
 	// Get ourselves into the ARP table
-	prober.SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, CI->m_srcmac, CI->m_dstport, CI->m_srcport);
+	prober.Probe();
 
 	sleep(5);
 
@@ -267,7 +277,7 @@ void checkGratuitousBehavior() {
 	response = ResponseBehavior();
 	seenProbe = false;
 	replyToArp = false;
-	CI->m_srcmac.__addr_u.__eth.data[5]++;
+	chooseNewSourceMac();
 	pthread_mutex_unlock(&cbLock);
 
 	int probeTestNumber = 0;
@@ -279,6 +289,8 @@ void checkGratuitousBehavior() {
 		for (int macDestination = 0; macDestination < 2; macDestination++) {
 			for (int tpa = 0; tpa < 3; tpa++) {
 				for (int tha = 0; tha < 3; tha++){
+					cout << "Starting test " << probeTestNumber + 1 << " of 36" << endl;
+
 					addr tpaAddress;
 					if (tpa == 0) {
 						tpaAddress = zeroIP;
@@ -319,7 +331,6 @@ void checkGratuitousBehavior() {
 
 					results[probeTestNumber] = testResult;
 					probeTestNumber++;
-
 
 					// Helps reset the neighbor cache's entry state to reachable for each test
 					if (true || probeTestNumber % 10 == 0)
@@ -406,7 +417,7 @@ int main(int argc, char ** argv)
 	}
 
 	if (CI->m_test == 200) {
-		prober.SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, CI->m_srcmac, CI->m_dstport, CI->m_srcport);
+		prober.Probe();
 		return 0;
 	}
 
@@ -417,11 +428,11 @@ int main(int argc, char ** argv)
 		sleep(3);
 		checkGratuitousBehavior();
 
+		cout << fingerprinter.GetMatchReport(fingerprint) << endl;
+
 		cout << "FINGERPRINT FOLLOWS" << endl;
 		cout << fingerprint.toString() << endl << endl;
 		cout << fingerprint.toTinyString() << endl;
-
-		cout << fingerprinter.GetMatchReport(fingerprint) << endl;
 	}
 
 	if (CI->m_test == 1) {
@@ -440,6 +451,11 @@ int main(int argc, char ** argv)
 		 * be replied to followed by ARP requests. Windows 7 at least will ignore the gratuitous ARP packet
 		 * entirely and not exhibit the same behavior.
 		*/
+
+		/* This has mostly been depricated by test #4. Both OSes do pay attention to some forms of unsolicited
+		 * ARP packets if the neighbor is already in the cach.
+		 *
+		 */
 		for (int i = 0; i < 2; i++) {
 			pthread_mutex_lock(&cbLock);
 			response = ResponseBehavior();
@@ -454,7 +470,7 @@ int main(int argc, char ** argv)
 			prober.SendARPReply(&CI->m_srcmac, &broadcastMAC, &CI->m_srcip, &CI->m_srcip);
 
 
-			prober.SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, CI->m_srcmac, CI->m_dstport, CI->m_srcport);
+			prober.Probe();
 			sleep(CI->m_sleeptime);
 			pthread_mutex_lock(&cbLock);
 			cout << response.toString() << endl << endl;
@@ -465,6 +481,31 @@ int main(int argc, char ** argv)
 
 	if (CI->m_test == 4) {
 		checkGratuitousBehavior();
+	}
+
+	// Should already be in the ARP table
+	if (CI->m_test == 5) {
+		int start = CI->m_srcmac.__addr_u.__eth.data[5];
+		for (int i = 0; i < 35; i++) {
+			chooseNewSourceMac();
+			prober.SendARPReply(&CI->m_srcmac, &CI->m_dstmac, &CI->m_srcip, &CI->m_dstip);
+			usleep(100000);
+		}
+
+		pthread_mutex_lock(&cbLock);
+		response = ResponseBehavior();
+		seenProbe = false;
+		pthread_mutex_unlock(&cbLock);
+
+
+		prober.Probe();
+
+		sleep(2);
+		pthread_mutex_lock(&cbLock);
+		cout << "Reply was to " << addr_ntoa(&response.dstMac) << endl;
+		cout << "count was " << response.dstMac.__addr_u.__eth.data[5] - start << endl;
+		pthread_mutex_unlock(&cbLock);
+
 	}
 
 

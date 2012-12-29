@@ -6,6 +6,7 @@
 #include <string>
 #include <utility>
 #include <math.h>
+#include <algorithm>
 
 using namespace std;
 
@@ -48,23 +49,32 @@ int Fingerprinter::CompareFingerprints(ArpFingerprint f1, ArpFingerprint f2) {
 	cout << f2.toTinyString() << endl;
 	cout << endl;
 	int differenceScore = 0;
-	if (f1.requestAttempts != f2.requestAttempts)
-		differenceScore += 5;
+	if (f1.requestAttemptsMin != f2.requestAttemptsMin)
+		differenceScore += 8;
+
+	if (f1.requestAttemptsMax != f2.requestAttemptsMax)
+		differenceScore += 8;
 
 	if (f1.constantRetryTime != f2.constantRetryTime)
-		differenceScore += 2;
+		differenceScore += 4;
 
 	if (f1.referencedStaleTimeout != f2.referencedStaleTimeout) {
 		if (abs(f1.referencedStaleTimeout - f2.referencedStaleTimeout) > 5) {
-			differenceScore += 2;
+			differenceScore += 4;
 		}
 	}
 
+	if (abs(f1.minTimeBetweenRetries - f2.minTimeBetweenRetries) > 250000)
+		differenceScore += 4;
+
+	if (abs(f1.maxTimeBetweenRetries - f2.maxTimeBetweenRetries) > 250000)
+		differenceScore += 4;
+
 	if (f1.replyBeforeUpdate != f2.replyBeforeUpdate)
-		differenceScore += 2;
+		differenceScore += 4;
 
 	if (f1.unicastUpdate != f2.unicastUpdate)
-		differenceScore += 2;
+		differenceScore += 4;
 
 	for (int i = 0; i < 36; i++) {
 		if (f1.gratuitousUpdates[i] != f2.gratuitousUpdates[i]) {
@@ -73,6 +83,10 @@ int Fingerprinter::CompareFingerprints(ArpFingerprint f1, ArpFingerprint f2) {
 	}
 
 	return differenceScore;
+}
+
+bool compareFunction(pair<int, string> a, pair<int, string> b) {
+	return a.first < b.first;
 }
 
 std::string Fingerprinter::GetMatchReport(ArpFingerprint fingerprint) {
@@ -86,6 +100,8 @@ std::string Fingerprinter::GetMatchReport(ArpFingerprint fingerprint) {
 	}
 
 	// TODO sort the results
+
+	sort(results.begin(), results.end(), compareFunction);
 
 	for (uint i = 0; i < results.size(); i++) {
 		cout << results[i].first << "\t\t" << results[i].second << endl;

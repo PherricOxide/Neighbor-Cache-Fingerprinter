@@ -137,6 +137,15 @@ if an ARP update for the same IP address is received within an
 
 TODO: Can we use this for fingerprinting via double ARP replies and checking which is used?
 
+Verified that this happen in Linux via the locktime setting (default 1 second),
+
+897                 /* If several different ARP replies follows back-to-back,
+898                    use the FIRST one. It is possible, if several proxy
+899                    agents are active. Taking the first reply prevents
+900                    arp trashing and chooses the fastest router.
+901                  */
+902                 override = time_after(jiffies, n->updated + n->parms->locktime);
+
 
 ===================================================================================================
                         TODO RESEARCH IN PROGRESS
