@@ -13,7 +13,11 @@ install-sh
 */*.Po
 src/.deps/*
 src/ncf
+src/tests/*
 config.log
 /src/.cproject
 /src/.project
 /src/test
+/src/scanner.bash
+/src/fingerprints.txt~
+/src/.scanner.bash.swp
