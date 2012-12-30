@@ -655,6 +655,7 @@ int main(int argc, char ** argv)
 		cout << fingerprint.toTinyString() << endl;
 		cout << "FINGERPRINT ENDS" << endl << endl;
 
+		cout << "Fingerprint matches follow (best matches being first)" << endl;
 		cout << fingerprinter.GetMatchReport(fingerprint) << endl;
 	}
 

@@ -53,17 +53,41 @@ domain (usually the same physical network). It also has the disadvantage of
 being fairly slow compared to other OS scanners (a scan can take ~5 minutes).
 
 ==============================================================================
-                            ARP Packet Structure
+                            Tool Installation
 ==============================================================================
 
-TODO
+	First, get the dependency Boost Program Options via your system's
+package manager. In Ubuntu: sudo apt-get install libboost-program-options-dev
+
+	Then build with the standard,
+		./configure
+		make
+		sudo make install
 
 
 ==============================================================================
-                            NDP Packet Structure
+                            Tool Usage
 ==============================================================================
 
-Currently this tool doesn't support IPV6 and NDP, but it's on the TODO list.
+	Details of the command line arguments can be gotten by running,
+
+		neighbor-fingerprint --help
+
+	To run the standard Operating System scan on a host,
+
+		neighbor-fingerprint --dstip x.x.x.x --srcip x.x.x.x
+
+	IMPORTANT NOTE! 
+		The srcip field should be an IP address that is unused on your
+	network. Several tests depend on the fact that this spoofed source IP
+	address is not already in the ARP cache of the machine being scanned.
+	If you know your network well, you can choose an IP address you know
+	is unused. If not, you'll need to use a tool like nmap or arp-scan
+	to find an unused IP address to use. You'll also have to change the
+	srcip if you rerun the tool to ensure the most accurate results,
+	as some systems will keep the IP in their ARP cache for up to 20 mins.
+
+	Note: The default fingerprint scan takes about 5 minutes.
 
 
 ==============================================================================
@@ -183,7 +207,7 @@ Send probe packet with a source MAC address of srcMacArg in the Ethernet frame
 
 	The first packet attempts to get the cache entry into a known state: up
 to date and storing the source MAC address that is our default or the command
-line arguement --srcmac. The following ARP packet is the actual probe
+line argument --srcmac. The following ARP packet is the actual probe
 permutation that's being tested.
 
 	If the reply to the probe packet is to (srcMacArg + 1), then we know the
