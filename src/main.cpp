@@ -664,6 +664,7 @@ int main(int argc, char ** argv)
 		sleep(3);
 		checkGratuitousBehavior();
 		checkForFloodProtection();
+		checkIsIpUsedResponse();
 
 		cout << endl;
 		cout << fingerprint.toString() << endl << endl;

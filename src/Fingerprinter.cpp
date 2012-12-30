@@ -50,8 +50,8 @@ void Fingerprinter::LoadFingerprints() {
 				ArpFingerprint fingerprint(line);
 				fingerprint.name = fingerprintName;
 				m_fingerprints.push_back(fingerprint);
-				//cout << "Loading   " << line << endl;
-				//cout << "Loaded in " << fingerprint.toTinyString() << endl << endl;
+				//cout << "Loading   " << fingerprintName << endl << line << endl;
+				//cout << "Loaded in " << fingerprint.toString() << endl << endl;
 
 				if (line != fingerprint.toTinyString())
 					cout << "Possible error reading fingerprint for " << fingerprintName << endl;
