@@ -35,6 +35,16 @@ void incrementSourceMac() {
 	CI->m_srcmac.__addr_u.__eth.data[5]++;
 }
 
+// TODO: The response variable is how we get info back from the callback.
+// This is a hacky way to do it left over from the initial prototype,
+// the entire callback function really needs refactoring at some point.
+void ResetResponse(bool setSeenProbe) {
+	pthread_mutex_lock(&cbLock);
+	seenProbe = setSeenProbe;
+	response = ResponseBehavior();
+	pthread_mutex_unlock(&cbLock);
+}
+
 void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, const unsigned char *packet) {
 	Lock lock(&cbLock);
 
@@ -111,10 +121,18 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 			addr addr;
 			addr_pack_ip(&addr, arpRequest->ar_tpa);
 
+			// Drop it if not to broadcast or our current srcmac
+			if (addr_cmp(&broadcastMAC, &dstMac) != 0 && addr_cmp(&CI->m_srcmac, &dstMac) != 0)
+				return;
+
 			addr_pack_ip(&response.tpa, arpRequest->ar_tpa);
 			addr_pack_eth(&response.tha, arpRequest->ar_tha);
 			addr_pack_ip(&response.spa, arpRequest->ar_spa);
 			addr_pack_eth(&response.sha, arpRequest->ar_sha);
+
+			// Drop it if not from our target IP
+			if (addr_cmp(&response.spa, &CI->m_dstip) != 0)
+				return;
 
 			response.sawArpReply = true;
 
@@ -167,6 +185,34 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 	}
 }
 
+// Find the destination MAC address for our target if not specified on CLI
+void ConfigureDestinationMAC() {
+	// Check if dstmac already set
+	if (addr_cmp(&CI->m_dstmac, &zeroMAC) == 0) {
+		cout << "Attempting to find MAC address of target via ARP" << endl;
+
+		// Don't drop packets because we're not doing a probe here
+		ResetResponse(true);
+
+		prober.SendARPReply(&CI->m_srcmac, &broadcastMAC, &zeroIP, &CI->m_dstip, ARP_OP_REQUEST, &zeroMAC);
+		sleep(2);
+
+		pthread_mutex_lock(&cbLock);
+		if (response.sawArpReply) {
+			CI->m_dstmac = response.sha;
+			cout << "Setting target MAC address to " << addr_ntoa(&response.sha) << endl;
+		} else {
+			cout << "ERROR: Did not see a reply to our ARP probe! Unable to perform scan." << endl;
+			cout << "Please check that the target host is up. If it is, you can specify it's MAC with --dstmac to bypass this step." << endl;
+			exit(1);
+		}
+
+		pthread_mutex_unlock(&cbLock);
+
+
+	}
+}
+
 // This is used in the gratuitous ARP test for checking the result
 bool gratuitousResultCheck() {
 	bool result;
@@ -177,7 +223,6 @@ bool gratuitousResultCheck() {
 	pthread_mutex_lock(&cbLock);
 	if (!response.sawProbeReply) {
 		cout << "WARNING: Saw no probe response! Unable to perform test." << endl;
-		//exit(1);
 	}
 
 	if (response.replyToCorrectMAC) {
@@ -402,10 +447,7 @@ void checkGratuitousBehavior() {
 
 					prober.SendARPReply(&origSrcMac, &CI->m_dstmac, &CI->m_srcip, &CI->m_dstip);
 					sleep(3);
-					pthread_mutex_lock(&cbLock);
-					response = ResponseBehavior();
-					seenProbe = false;
-					pthread_mutex_unlock(&cbLock);
+					ResetResponse(false);
 				}
 			}
 		}
@@ -431,10 +473,7 @@ void checkForFloodProtection() {
 		usleep(250000);
 	}
 
-	pthread_mutex_lock(&cbLock);
-	response = ResponseBehavior();
-	seenProbe = false;
-	pthread_mutex_unlock(&cbLock);
+	ResetResponse(false);
 
 	prober.Probe();
 	sleep(2);
@@ -488,9 +527,7 @@ void checkIsIpUsedResponse() {
 	cout << "Checking if target replies properly to RFC5227 ARP Probe" << endl;
 	cout << horizontalLine << endl;
 
-	pthread_mutex_lock(&cbLock);
-	seenProbe = true;
-	pthread_mutex_unlock(&cbLock);
+	ResetResponse(true);
 
 	prober.SendARPReply(&CI->m_srcmac, &broadcastMAC, &zeroIP, &CI->m_dstip, ARP_OP_REQUEST, &zeroMAC);
 	sleep(2);
@@ -545,7 +582,6 @@ int main(int argc, char ** argv)
 		zeroMacNumber[i] = 0;
 	addr_pack_eth(&zeroMAC, &zeroMacNumber[0]);
 
-
 	stringstream pcapFilterString;
 	pcapFilterString << "arp or (dst host " << CI->m_srcipString << ")";
 
@@ -558,6 +594,9 @@ int main(int argc, char ** argv)
 	capture->SetPacketCb(&packetCallback);
 	capture->StartCapture();
 	sleep(1);
+
+	// Get the MAC of our target
+	ConfigureDestinationMAC();
 
 
 	// This one doesn't update ARP cache on Linux 2.6 but seems to work in Linux 3.x.
@@ -641,16 +680,9 @@ int main(int argc, char ** argv)
 		 *
 		 */
 		for (int i = 0; i < 2; i++) {
-			pthread_mutex_lock(&cbLock);
-			response = ResponseBehavior();
-			seenProbe = false;
-			pthread_mutex_unlock(&cbLock);
-
+			ResetResponse(false);
 
 			// Send gratuitous ARP reply
-			addr zero;
-			uint32_t zeroIp = 0;
-			addr_pack_ip(&zero, (uint8_t*)&zeroIp);
 			prober.SendARPReply(&CI->m_srcmac, &broadcastMAC, &CI->m_srcip, &CI->m_srcip);
 
 
@@ -687,10 +719,7 @@ int main(int argc, char ** argv)
 			incrementSourceMac();
 			prober.SendARPReply(&CI->m_srcmac, &CI->m_dstmac, &CI->m_srcip, &CI->m_dstip);
 
-			pthread_mutex_lock(&cbLock);
-			response = ResponseBehavior();
-			seenProbe = false;
-			pthread_mutex_unlock(&cbLock);
+			ResetResponse(false);
 
 			prober.Probe();
 

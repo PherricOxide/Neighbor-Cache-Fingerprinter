@@ -59,7 +59,7 @@ void Config::LoadArgs(char ** &argv, int &argc) {
 			)
 			
 			("dstmac",
-				po::value<std::string>()->required(),
+				po::value<std::string>()->default_value("00:00:00:00:00:00"),
 				"Destination MAC Address"
 			)
 
