@@ -21,3 +21,4 @@ config.log
 /src/scanner.bash
 /src/fingerprints.txt~
 /src/.scanner.bash.swp
+/src/neighbor-fingerprint
