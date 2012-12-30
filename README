@@ -183,37 +183,54 @@ result in some timing related result changes. For now I haven't made an attempt 
 
 
 ===================================================================================================
-                        TODO RESEARCH IN PROGRESS
 		Fingerprint Technique: Can we get put into the cache with a gratuitous packet?
 ===================================================================================================
 
 	As mentioned in the last section, most operating systems won't add a new entry to the cache
 given a gratuitous ARP packet, but they will update existing entries. One of the few differences
 between Windows XP and FreeBSD's fingerprint is that we can place an entry in the cache by sending
-a certain gratuitous packet.
-
-TODO
+a certain gratuitous packet to a FreeBSD machine, and test if it was in the cache by seeing if a 
+probe gets a response or not.
 
 ===================================================================================================
-                        TODO RESEARCH IN PROGRESS
-		Fingerprint Technique: Ignored second ARP replies
+		Fingerprint Technique: ARP Flood Prevention (Ignored rapid ARP replies)
 ===================================================================================================
-(http://www-01.ibm.com/support/docview.wss?uid=swg1IO06154) 
 
-There was a change in the ARP code way back in 1994 such that
-if an ARP update for the same IP address is received within an
-800ms window, ignore the second ARP. 
+RFC1122 (Requirements for Internet Hosts) states,
 
-TODO: Can we use this for fingerprinting via double ARP replies and checking which is used?
+	A mechanism to prevent ARP flooding (repeatedly sending an
+        ARP Request for the same IP address, at a high rate) MUST be
+        included.  The recommended maximum rate is 1 per second per destination.
 
-Verified that this happen in Linux via the locktime setting (default 1 second),
+	Linux will not only ignore duplicate REQUEST packets within a certain time, but also duplicate 
+REPLY packets. We can test this by sending a set of unsolicited ARP replies within a short time
+range with differenc MAC addresses being reported by each reply. Sending a probe will reveal in
+the probe response destination MAC address if the host responds to the first MAC address we ARPed
+or the last, indicating if it ignored the later rapid replies.
 
-897                 /* If several different ARP replies follows back-to-back,
-898                    use the FIRST one. It is possible, if several proxy
-899                    agents are active. Taking the first reply prevents
-900                    arp trashing and chooses the fastest router.
-901                  */
-902                 override = time_after(jiffies, n->updated + n->parms->locktime);
+
+===================================================================================================
+		Fingerprint Technique: Correct Reply to RFC5227 ARP Probe
+===================================================================================================
+
+	This test sends an "ARP Probe" as defined by RFC 5227 (IPv4 Address Conflict Detection) and
+checks the response to see if it confirms to the specification. The point of the ARP Probe is to 
+check if an IP address is being used without the risk of accidently causing someone's ARP cache to
+update with your own MAC address when it sees your query. Given that you're likely trying to tell if
+an IP address is being used because you want to claim it, you likely don't have an IP address of your
+own yet, so the Sender Protocol Address field is set to 0 in the ARP REQUEST.
+
+The RFC specifies the response as,
+
+  (the probed host) MAY elect to attempt to defend its address by
+   ... broadcasting one single ARP Announcement, giving its own
+   IP and hardware addresses as the sender addresses of the ARP,
+   with the 'target IP address' set to its own IP address, and the
+   'target hardware address' set to all zeroes.
+
+  But any Linux kernel older than 2.6.24 and some other operating systems will respond incorrectly,
+with a packet that has tpa == spa and tha == sha. Checking if tpa == 0 has proven sufficient for
+a boolean fingerprint feature.
 
 
 ===================================================================================================
