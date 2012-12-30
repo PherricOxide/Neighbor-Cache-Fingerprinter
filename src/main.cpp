@@ -16,7 +16,6 @@ using namespace std;
 using namespace Nova;
 
 
-// TOOD: Might want to move state data out of the fingerprint and into per test structs of some sort
 pthread_mutex_t cbLock;
 ResponseBehavior response;
 ArpFingerprint fingerprint;
@@ -29,8 +28,10 @@ Prober prober;
 
 timeval lastARPReply; /* Used to compute the time between ARP requests */
 
+string horizontalLine = "======================================================================";
+
 // TODO: Do this a better way (don't loop at 255, don't use addr internals)
-void chooseNewSourceMac() {
+void incrementSourceMac() {
 	CI->m_srcmac.__addr_u.__eth.data[5]++;
 }
 
@@ -65,7 +66,7 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 
 
 			if (addr_cmp(&addr, &CI->m_srcip) == 0) {
-				cout << "Got an ARP request to " << addr_ntoa(&dstMac) << " for IP " << addr_ntoa(&addr) << " from " << addr_ntoa(&srcMac) << endl;
+				cout << "<< Got an ARP request to " << addr_ntoa(&dstMac) << " for IP " << addr_ntoa(&addr) << " from " << addr_ntoa(&srcMac) << endl;
 
 				if (addr_cmp(&dstMac, &CI->m_srcmac) == 0) {
 					response.unicastUpdate = true;
@@ -83,8 +84,6 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 				int diff = 0;
 				diff += 1000000*(pkthdr->ts.tv_sec  - lastARPReply.tv_sec);
 				diff += pkthdr->ts.tv_usec - lastARPReply.tv_usec;
-				cout << "Time since last ARP request was " << pkthdr->ts.tv_sec  - lastARPReply.tv_sec << " seconds " << endl;
-
 
 				if (response.requestAttempts > 1 && response.requestAttempts < MAX_RECORDED_REPLIES) {
 					response.timeBetweenRequests[response.requestAttempts - 2] = diff;
@@ -138,7 +137,7 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 					response.replyToCorrectMAC = false;
 				}
 
-				cout << "Saw a probe response to " << addr_ntoa(&dstIp) << " / " << addr_ntoa(&dstMac) << " from " << addr_ntoa(&srcIp) << " / " << addr_ntoa(&srcMac) << endl;
+				cout << "<< Saw a probe response to " << addr_ntoa(&dstIp) << " / " << addr_ntoa(&dstMac) << " from " << addr_ntoa(&srcIp) << " / " << addr_ntoa(&srcMac) << endl;
 				response.sawProbeReply = true;
 				if (response.requestAttempts == 0)
 					response.replyBeforeARP = true;
@@ -149,7 +148,6 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 		}
 	}
 }
-
 
 // This is used in the gratuitous ARP test for checking the result
 bool gratuitousResultCheck() {
@@ -166,15 +164,15 @@ bool gratuitousResultCheck() {
 
 	if (response.replyToCorrectMAC) {
 		result = true;
-		cout << "PASS: Gratuitous ARP was accepted into the table" << endl << endl;
+		cout << "PASS: Gratuitous ARP was accepted into the cache" << endl << endl;
 	} else {
 		result = false;
-		cout << "FAIL: Gratuitous ARP was NOT accepted into the table" << endl << endl;;
+		cout << "FAIL: Gratuitous ARP was NOT accepted into the cache" << endl << endl;;
 	}
 
 	response = ResponseBehavior();
 	seenProbe = false;
-	chooseNewSourceMac();
+	incrementSourceMac();
 
 	pthread_mutex_unlock(&cbLock);
 	return result;
@@ -182,12 +180,16 @@ bool gratuitousResultCheck() {
 
 void checkInitialQueryBehavior()
 {
+	cout << horizontalLine << endl;
+	cout << "Checking initial response to probe" << endl;
+	cout << horizontalLine << endl;
+
 	for (int i = 0; i < CI->m_retries; i++) {
 		prober.Probe();
 		sleep(CI->m_sleeptime);
 
 		pthread_mutex_lock(&cbLock);
-		cout << response.toString() << endl << endl;
+		cout << response.toString() << endl;
 
 
 		if (response.requestAttempts > fingerprint.requestAttemptsMax) {
@@ -225,11 +227,56 @@ void checkInitialQueryBehavior()
 	fingerprint.minTimeBetweenRetries = response.m_minTimeBetweenRequests;
 }
 
+
+/*
+ * Test Purpose
+ *     This checks if an unsolicited reply can create a neighbor entry or update
+ *   one that's in an invalid state.
+ *
+ * Target State Prerequisite
+ *     We assume that the we're not currently in the neighbor cache or are
+ *   in an invalid state and will NOT reply to probes until the ARP entry
+ *   is verified. If this is not the case, results of this test will be bogus.
+ *
+ * Test Overview
+ *   >> Send a standard unicast ARP Reply (as if the host send us a REQUEST)
+ *   >> Send a probe
+ *   << Wait for probe response
+ *   If we got a probe response,
+ *     We know that the unsolicited reply created/updated the cache entry
+*/
+void checkInitialUnsolictedReply() {
+	cout << horizontalLine << endl;
+	cout << "Checking if unsolicited reply creates cache entry" << endl;
+	cout << horizontalLine << endl;
+
+	prober.SendARPReply(&CI->m_srcmac, &CI->m_dstmac, &CI->m_srcip, &CI->m_dstip);
+	sleep(1);
+	prober.Probe();
+	sleep(1);
+
+	pthread_mutex_lock(&cbLock);
+	cout << response.toString() << endl;
+
+	if (response.sawProbeReply) {
+		fingerprint.gratuitousReplyAddsCacheEntry = true;
+	} else {
+		fingerprint.gratuitousReplyAddsCacheEntry = false;
+	}
+	pthread_mutex_unlock(&cbLock);
+}
+
+
 void checkStaleTiming() {
+	cout << horizontalLine << endl;
+	cout << "Checking how long before cache entry expires" << endl;
+	cout << horizontalLine << endl;
+
 	// TODO: What do we do about the max for this? Could take 20 mins on freebsd
-	// For now we just go up to a max of 1 min?
+	// For now we just go up to a max of 1 min? Should have option to go longer.
 	int i;
 	for (i = 0; i < 60; i++) {
+		cout << endl << "Sending probe " << i + 1 << " of " << 60 << endl;
 		pthread_mutex_lock(&cbLock);
 		response = ResponseBehavior();
 		seenProbe = false;
@@ -246,7 +293,6 @@ void checkStaleTiming() {
 		sleep(1);
 
 		pthread_mutex_lock(&cbLock);
-		cout << response.toString() << endl << endl;
 		if (response.requestAttempts > 0 && i != 0) {
 			break;
 		}
@@ -261,6 +307,10 @@ void checkStaleTiming() {
 }
 
 void checkGratuitousBehavior() {
+	cout << horizontalLine << endl;
+	cout << "Checking if cache is updated with various unsolicited ARP packets" << endl;
+	cout << horizontalLine << endl;
+
 	origSrcMac = CI->m_srcmac;
 
 	pthread_mutex_lock(&cbLock);
@@ -268,7 +318,7 @@ void checkGratuitousBehavior() {
 	pthread_mutex_unlock(&cbLock);
 
 
-	// Get ourselves into the ARP table
+	// Get ourselves into the ARP cache
 	prober.Probe();
 
 	sleep(5);
@@ -277,7 +327,7 @@ void checkGratuitousBehavior() {
 	response = ResponseBehavior();
 	seenProbe = false;
 	replyToArp = false;
-	chooseNewSourceMac();
+	incrementSourceMac();
 	pthread_mutex_unlock(&cbLock);
 
 	int probeTestNumber = 0;
@@ -289,7 +339,7 @@ void checkGratuitousBehavior() {
 		for (int macDestination = 0; macDestination < 2; macDestination++) {
 			for (int tpa = 0; tpa < 3; tpa++) {
 				for (int tha = 0; tha < 3; tha++){
-					cout << "Starting test " << probeTestNumber + 1 << " of 36" << endl;
+					cout << endl << "Starting test " << probeTestNumber + 1 << " of 36" << endl;
 
 					addr tpaAddress;
 					if (tpa == 0) {
@@ -332,17 +382,12 @@ void checkGratuitousBehavior() {
 					results[probeTestNumber] = testResult;
 					probeTestNumber++;
 
-					// Helps reset the neighbor cache's entry state to reachable for each test
-					if (true || probeTestNumber % 10 == 0)
-					{
-						prober.SendARPReply(&origSrcMac, &CI->m_dstmac, &CI->m_srcip, &CI->m_dstip);
-						sleep(3);
-						pthread_mutex_lock(&cbLock);
-						response = ResponseBehavior();
-						seenProbe = false;
-						pthread_mutex_unlock(&cbLock);
-
-					}
+					prober.SendARPReply(&origSrcMac, &CI->m_dstmac, &CI->m_srcip, &CI->m_dstip);
+					sleep(3);
+					pthread_mutex_lock(&cbLock);
+					response = ResponseBehavior();
+					seenProbe = false;
+					pthread_mutex_unlock(&cbLock);
 				}
 			}
 		}
@@ -355,6 +400,45 @@ void checkGratuitousBehavior() {
 	cout << "Result fingerprint from gratuitous test," << endl;
 	cout << result.str() << endl;
 }
+
+void checkForFloodProtection() {
+	cout << horizontalLine << endl;
+	cout << "Checking if target has ARP flood protection" << endl;
+	cout << horizontalLine << endl;
+
+	int start = CI->m_srcmac.__addr_u.__eth.data[5];
+	for (int i = 0; i < 6; i++) {
+		incrementSourceMac();
+		prober.SendARPReply(&CI->m_srcmac, &CI->m_dstmac, &CI->m_srcip, &CI->m_dstip);
+		usleep(250000);
+	}
+
+	pthread_mutex_lock(&cbLock);
+	response = ResponseBehavior();
+	seenProbe = false;
+	pthread_mutex_unlock(&cbLock);
+
+	prober.Probe();
+	sleep(2);
+
+	pthread_mutex_lock(&cbLock);
+	cout << "Reply was to " << addr_ntoa(&response.dstMac) << endl;
+	cout << "count was " << response.dstMac.__addr_u.__eth.data[5] - start << endl;
+
+	if (response.dstMac.__addr_u.__eth.data[5] - start == 0) {
+		cout << "ERROR: None of the replies were accepted into the cache! Can not determine result for this test." << endl;
+		fingerprint.hasFloodProtection = false;
+	} else if (response.dstMac.__addr_u.__eth.data[5] - start == 1) {
+		fingerprint.hasFloodProtection = true;
+		cout << "ARP flood protection was detected" << endl;
+	} else {
+		cout << "No ARP flood protection detected" << endl;
+		fingerprint.hasFloodProtection = false;
+	}
+
+	pthread_mutex_unlock(&cbLock);
+}
+
 
 int main(int argc, char ** argv)
 {
@@ -393,8 +477,8 @@ int main(int argc, char ** argv)
 	sleep(1);
 
 
-	// This one doesn't update ARP tables on Linux 2.6 but seems to work in Linux 3.x.
-	// The rest all work to update the table but not to create new entry in Linux.
+	// This one doesn't update ARP cache on Linux 2.6 but seems to work in Linux 3.x.
+	// The rest all work to update the cache but not to create new entry in Linux.
 	if (CI->m_test == 100) {
 		prober.SendARPReply(&CI->m_srcmac, &broadcastMAC, &CI->m_srcip, &CI->m_srcip);
 		return 0;
@@ -405,7 +489,7 @@ int main(int argc, char ** argv)
 		return 0;
 	}
 
-	// This one adds an entry to the ARP table in FreeBSD
+	// This one adds an entry to the ARP cache in FreeBSD
 	if (CI->m_test == 102) {
 		prober.SendARPReply(&CI->m_srcmac, &CI->m_dstmac, &CI->m_srcip, &CI->m_dstip);
 		return 0;
@@ -424,15 +508,20 @@ int main(int argc, char ** argv)
 
 	if (CI->m_test == 0) {
 		checkInitialQueryBehavior();
+		checkInitialUnsolictedReply();
 		checkStaleTiming();
 		sleep(3);
 		checkGratuitousBehavior();
+		checkForFloodProtection();
+
+		cout << endl;
+		cout << fingerprint.toString() << endl << endl;
+
+		cout << "FINGERPRINT BEGINS" << endl;
+		cout << fingerprint.toTinyString() << endl;
+		cout << "FINGERPRINT ENDS" << endl << endl;
 
 		cout << fingerprinter.GetMatchReport(fingerprint) << endl;
-
-		cout << "FINGERPRINT FOLLOWS" << endl;
-		cout << fingerprint.toString() << endl << endl;
-		cout << fingerprint.toTinyString() << endl;
 	}
 
 	if (CI->m_test == 1) {
@@ -446,7 +535,7 @@ int main(int argc, char ** argv)
 	if (CI->m_test == 3) {
 		/*
 		 * We run this test twice to note a neat difference between Windows and Linux.
-		 * In Linux, the first probe packet will cause the SYN/RST to put an entry in the ARP table, which will be
+		 * In Linux, the first probe packet will cause the SYN/RST to put an entry in the ARP cache, which will be
 		 * set to FAIL state and then updated to STALE when it sees the gratuitous ARP, causing the 2nd probe to
 		 * be replied to followed by ARP requests. Windows 7 at least will ignore the gratuitous ARP packet
 		 * entirely and not exhibit the same behavior.
@@ -483,42 +572,24 @@ int main(int argc, char ** argv)
 		checkGratuitousBehavior();
 	}
 
-	// Should already be in the ARP table
+	// Should already be in the ARP cache before calling this
+	// TODO check for bad results from not being in the cache already
 	if (CI->m_test == 5) {
-		int start = CI->m_srcmac.__addr_u.__eth.data[5];
-		for (int i = 0; i < 35; i++) {
-			chooseNewSourceMac();
-			prober.SendARPReply(&CI->m_srcmac, &CI->m_dstmac, &CI->m_srcip, &CI->m_dstip);
-			usleep(100000);
-		}
-
-		pthread_mutex_lock(&cbLock);
-		response = ResponseBehavior();
-		seenProbe = false;
-		pthread_mutex_unlock(&cbLock);
-
-
-		prober.Probe();
-
-		sleep(2);
-		pthread_mutex_lock(&cbLock);
-		cout << "Reply was to " << addr_ntoa(&response.dstMac) << endl;
-		cout << "count was " << response.dstMac.__addr_u.__eth.data[5] - start << endl;
-		pthread_mutex_unlock(&cbLock);
-
+		checkForFloodProtection();
 	}
 
-	// Should already be in the ARP table
+	// Should already be in the ARP cache
+	// TODO check for bad results from not being in the ARP cache already
 	if (CI->m_test == 6) {
 		int start;
 		for (int i = 15; i < 30; i++) {
 			start = CI->m_srcmac.__addr_u.__eth.data[5];
 
-			chooseNewSourceMac();
+			incrementSourceMac();
 			prober.SendARPReply(&CI->m_srcmac, &CI->m_dstmac, &CI->m_srcip, &CI->m_dstip);
 			usleep(i*50000);
 			cout << "Delay was (ms): " << i*50 << endl;
-			chooseNewSourceMac();
+			incrementSourceMac();
 			prober.SendARPReply(&CI->m_srcmac, &CI->m_dstmac, &CI->m_srcip, &CI->m_dstip);
 
 			pthread_mutex_lock(&cbLock);
@@ -530,11 +601,20 @@ int main(int argc, char ** argv)
 
 			sleep(2);
 			pthread_mutex_lock(&cbLock);
-			cout << "Reply was to " << addr_ntoa(&response.dstMac) << endl;
-			cout << "count was " << response.dstMac.__addr_u.__eth.data[5] - start << endl;
+			if (response.sawProbeReply) {
+				cout << "Reply was to " << addr_ntoa(&response.dstMac) << endl;
+				cout << "count was " << response.dstMac.__addr_u.__eth.data[5] - start << endl;
+			} else {
+				cout << "ERROR: Test failed because we saw no reply to our probe." << endl;
+			}
 			pthread_mutex_unlock(&cbLock);
 
 		}
+	}
+
+	// should NOT be in the ARP cache before calling this
+	if (CI->m_test == 7) {
+		checkInitialUnsolictedReply();
 	}
 
 

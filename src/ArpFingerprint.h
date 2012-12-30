@@ -35,7 +35,11 @@ public:
 	// Are requests to update the entry sent to the MAC of the machine instead of the bcast address?
 	bool unicastUpdate;
 
-	// TODO initial entry into the ARP table by gratuitous request or freebsd test==102
+	// Can we get put into the cache by sending a gratuitous reply?
+	bool gratuitousReplyAddsCacheEntry;
+
+	// Does the host appear to have ARP flood prevention by ignoring replies in quick succession?
+	bool hasFloodProtection;
 
 	// Checks against 36 format combinations of gratuitous packets to see if the cache is updated
 	bool gratuitousUpdates[36];

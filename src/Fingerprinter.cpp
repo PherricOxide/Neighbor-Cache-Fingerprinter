@@ -44,10 +44,13 @@ void Fingerprinter::LoadFingerprints() {
 }
 
 int Fingerprinter::CompareFingerprints(ArpFingerprint f1, ArpFingerprint f2) {
-	cout << "Comparison," << endl;
-	cout << f1.toTinyString()<< endl;
-	cout << f2.toTinyString() << endl;
-	cout << endl;
+	//cout << "Comparison," << endl;
+	//cout << f1.toTinyString()<< endl;
+	//cout << f2.toTinyString() << endl;
+	//cout << endl;
+
+	// These differenceScore numbers are mostly arbitrary, there needs to
+	// be some more experimenting done to tweak them to maximize accuracy
 	int differenceScore = 0;
 	if (f1.requestAttemptsMin != f2.requestAttemptsMin)
 		differenceScore += 8;
@@ -76,6 +79,12 @@ int Fingerprinter::CompareFingerprints(ArpFingerprint f1, ArpFingerprint f2) {
 	if (f1.unicastUpdate != f2.unicastUpdate)
 		differenceScore += 4;
 
+	if (f1.gratuitousReplyAddsCacheEntry != f2.gratuitousReplyAddsCacheEntry)
+		differenceScore += 4;
+
+	if (f1.hasFloodProtection != f2.hasFloodProtection)
+		differenceScore += 4;
+
 	for (int i = 0; i < 36; i++) {
 		if (f1.gratuitousUpdates[i] != f2.gratuitousUpdates[i]) {
 			differenceScore += 1;
@@ -98,8 +107,6 @@ std::string Fingerprinter::GetMatchReport(ArpFingerprint fingerprint) {
 		comparison.second = m_fingerprints[i].name;
 		results.push_back(comparison);
 	}
-
-	// TODO sort the results
 
 	sort(results.begin(), results.end(), compareFunction);
 

@@ -11,6 +11,8 @@ ArpFingerprint::ArpFingerprint() {
 	referencedStaleTimeout = 0;
 	replyBeforeUpdate = false;
 	unicastUpdate = false;
+	gratuitousReplyAddsCacheEntry = false;
+	hasFloodProtection = false;
 
 
 	for (int i = 0; i < 36; i++)
@@ -28,6 +30,8 @@ ArpFingerprint::ArpFingerprint(std::string tinyString) {
 	ss >> referencedStaleTimeout;
 	ss >> replyBeforeUpdate;
 	ss >> unicastUpdate;
+	ss >> gratuitousReplyAddsCacheEntry;
+	ss >> hasFloodProtection;
 
 	for (int i = 0; i < 36; i++) {
 		ss >> gratuitousUpdates[i];
@@ -45,6 +49,8 @@ string ArpFingerprint::toTinyString() {
 	ss << referencedStaleTimeout << " ";
 	ss << replyBeforeUpdate << " ";
 	ss << unicastUpdate << " ";
+	ss << gratuitousReplyAddsCacheEntry << " ";
+	ss << hasFloodProtection << " ";
 
 	for (int i = 0; i < 36; i++) {
 		ss << gratuitousUpdates[i] << " ";
@@ -61,11 +67,13 @@ string ArpFingerprint::toString() {
 	ss << "Min time between ARP retries  (ms)         : " << minTimeBetweenRetries << endl;
 	ss << "Max time between ARP retries  (ms)         : " << maxTimeBetweenRetries << endl;
 	ss << "Constant retry between attempts            : " << boolalpha << constantRetryTime << endl;
-	ss << "Stale timeout value                        : " << referencedStaleTimeout << endl;
-	ss << "Replied before ARP request                 : " << boolalpha << replyBeforeUpdate << endl;
-	ss << "Got unicast instead of bcast request       : " << boolalpha << unicastUpdate << endl;
+	ss << "Cache entry timeout value                  : " << referencedStaleTimeout << endl;
+	ss << "Replied before updating stale entry        : " << boolalpha << replyBeforeUpdate << endl;
+	ss << "Got unicast (vs bcast) update request      : " << boolalpha << unicastUpdate << endl;
+	ss << "Unsolicited reply creates cache entry      : " << boolalpha << gratuitousReplyAddsCacheEntry << endl;
+	ss << "Target ignores rapid successive replies    : " << boolalpha << hasFloodProtection << endl;
 
-	ss << "Gratuitous probe result fingerprint        : ";
+	ss << "Gratuitous probes result fingerprint       : ";
 	for (int i = 0; i < 36; i++) {
 		if (gratuitousUpdates[i]) {
 			ss << "1";
@@ -107,6 +115,12 @@ bool ArpFingerprint::operator ==(const ArpFingerprint &rhs) const {
 		return false;
 
 	if (unicastUpdate != rhs.unicastUpdate)
+		return false;
+
+	if (gratuitousReplyAddsCacheEntry != rhs.gratuitousReplyAddsCacheEntry)
+		return false;
+
+	if (hasFloodProtection != rhs.hasFloodProtection)
 		return false;
 
 	for (int i = 0; i < 36; i++) {

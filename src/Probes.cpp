@@ -33,7 +33,7 @@ void Prober::SendSYN(
 		return;
 	}
 
-	cout << "Sending SYN probe to " << addr_ntoa(&dstIP) << " / " << addr_ntoa(&dstMAC) << " from " << addr_ntoa(&srcIP) << " / " << addr_ntoa(&srcMAC) << endl;
+	cout << ">> Sending SYN probe to " << addr_ntoa(&dstIP) << " / " << addr_ntoa(&dstMAC) << " from " << addr_ntoa(&srcIP) << " / " << addr_ntoa(&srcMAC) << endl;
 
 	eth_send(eth, probeBuffer, probeBufferSize);
 	eth_close(eth);
@@ -59,9 +59,9 @@ void Prober::SendARPReply(
 	}
 
 	if (opcode == ARP_OP_REPLY) {
-		cout << "Sending ARP_REPLY to ";
+		cout << ">> Sending ARP_REPLY to ";
 	} else if (opcode == ARP_OP_REQUEST) {
-		cout << "Sending ARP_REQUEST to ";
+		cout << ">> Sending ARP_REQUEST to ";
 	} else {
 		cout << "ERROR: Invalid ARP op code" << endl;
 	}
