@@ -22,7 +22,7 @@ ArpFingerprint fingerprint;
 bool seenProbe = false;
 bool replyToArp = false;
 
-addr broadcastMAC, zeroIP, zeroMAC, origSrcMac;
+addr broadcastMAC, broadcastIP, zeroIP, zeroMAC, origSrcMac;
 
 Prober prober;
 
@@ -452,6 +452,10 @@ int main(int argc, char ** argv)
 	unsigned char broadcastBuffer[ETH_ADDR_LEN] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 	addr_pack_eth(&broadcastMAC, (uint8_t*)broadcastBuffer);
 
+	// Random note: 192.168.0.2 = ntohl(0xc0a80002);
+	uint32_t bcastNumber = ~0;
+	addr_pack_ip(&broadcastIP, (uint8_t*)&bcastNumber);
+
 	// Stuff the zero value into an ip addr
 	uint32_t zeroNumber = 0;
 	addr_pack_ip(&zeroIP, (uint8_t*)&zeroNumber);
@@ -497,6 +501,18 @@ int main(int argc, char ** argv)
 
 	if (CI->m_test == 103) {
 		prober.SendARPReply(&CI->m_srcmac, &CI->m_dstmac, &CI->m_srcip, (addr*)&zeroIP);
+		return 0;
+	}
+
+	if (CI->m_test == 104) {
+		prober.SendARPReply(&CI->m_srcmac, &broadcastMAC, &CI->m_srcip, &CI->m_dstip, ARP_OP_REQUEST, &zeroMAC);
+		return 0;
+	}
+
+	if (CI->m_test == 105) {
+		prober.SendARPReply(&CI->m_srcmac, &broadcastMAC, &CI->m_srcip, &broadcastIP, ARP_OP_REQUEST, &zeroMAC);
+		sleep(2);
+		prober.SendARPReply(&CI->m_srcmac, &CI->m_dstmac, &CI->m_srcip, &broadcastIP, ARP_OP_REQUEST, &zeroMAC);
 		return 0;
 	}
 
