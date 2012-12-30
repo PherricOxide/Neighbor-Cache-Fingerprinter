@@ -26,7 +26,8 @@ TEST_F(ArpFingerprintTest, test_tinyStringification)
 	foo.requestAttemptsMax = 3;
 	foo.constantRetryTime = true;
 	foo.gratuitousReplyAddsCacheEntry = true;
-	foo.hasFloodProtection = true;
+	foo.hasFloodProtection = false;
+	foo.correctARPProbeResponse  = true;
 	for (int i = 0; i < 36; i++)
 	{
 		if (i %2 == 0)

@@ -103,7 +103,24 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 				}
 				lastARPReply = pkthdr->ts;
 			}
+		} else if (ntohs(arp->ar_op) == ARP_OP_REPLY) {
+			if (pkthdr->len < ETH_HDR_LEN + ARP_HDR_LEN + ARP_ETHIP_LEN)
+				return;
+
+			arp_ethip *arpRequest = (arp_ethip*)(packet + ETH_HDR_LEN + ARP_HDR_LEN);
+			addr addr;
+			addr_pack_ip(&addr, arpRequest->ar_tpa);
+
+			addr_pack_ip(&response.tpa, arpRequest->ar_tpa);
+			addr_pack_eth(&response.tha, arpRequest->ar_tha);
+			addr_pack_ip(&response.spa, arpRequest->ar_spa);
+			addr_pack_eth(&response.sha, arpRequest->ar_sha);
+
+			response.sawArpReply = true;
+
+			cout << "<< Got an ARP reply to " << addr_ntoa(&dstMac) << " for IP " << addr_ntoa(&response.spa) << " from " << addr_ntoa(&srcMac) << endl;
 		}
+
 	} else if (ntohs(eth->eth_type) == ETH_TYPE_IP) {
 		if (pkthdr->len < ETH_HDR_LEN + IP_HDR_LEN)
 			return;
@@ -131,6 +148,7 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 
 			if (addr_cmp(&dstIp, &CI->m_srcip) == 0) {
 				response.dstMac = dstMac;
+				response.srcMac = srcMac;
 				if (addr_cmp(&dstMac, &CI->m_srcmac) == 0) {
 					response.replyToCorrectMAC = true;
 				} else {
@@ -440,6 +458,67 @@ void checkForFloodProtection() {
 }
 
 
+
+/*
+ * Test Purpose
+ *   This was a test written orginally written to detect the patch in the
+ *   Linux 2.6.24 Kernel, git commit b4a9811c42ecb70b2f0b375f6d4c77ab34d1f598
+ *
+ * Target State Prerequisites
+ *   None.
+ *
+ * Test Details
+ *   This test sends an "ARP Probe" as defined by RFC 5227 (IPv4 Address Conflict Detection) and
+ *   checks the response to see if it confirms to the specification.
+ *
+ *   The RFC specifies the response as,
+ *
+ *     (the probed host) MAY elect to attempt to defend its address by
+ *      ... broadcasting one single ARP Announcement, giving its own
+ *      IP and hardware addresses as the sender addresses of the ARP,
+ *      with the 'target IP address' set to its own IP address, and the
+ *      'target hardware address' set to all zeroes.
+ *
+ *     But any Linux kernel older than 2.6.24 and some other operating systems will respond incorrectly,
+ *   with a packet that has tpa == spa and tha == sha. Checking if tpa == 0 has proven sufficient for
+ *   a boolean fingerprint feature.
+ */
+void checkIsIpUsedResponse() {
+	cout << horizontalLine << endl;
+	cout << "Checking if target replies properly to RFC5227 ARP Probe" << endl;
+	cout << horizontalLine << endl;
+
+	pthread_mutex_lock(&cbLock);
+	seenProbe = true;
+	pthread_mutex_unlock(&cbLock);
+
+	prober.SendARPReply(&CI->m_srcmac, &broadcastMAC, &zeroIP, &CI->m_dstip, ARP_OP_REQUEST, &zeroMAC);
+	sleep(2);
+
+	pthread_mutex_lock(&cbLock);
+	cout << "Response follows," << endl;
+	if (response.sawArpReply) {
+		cout << "spa: " << addr_ntoa(&response.spa) << endl;
+		cout << "sha: " << addr_ntoa(&response.sha) << endl;
+		cout << "tpa: " << addr_ntoa(&response.tpa) << endl;
+		cout << "tha: " << addr_ntoa(&response.tha) << endl;
+
+		if (addr_cmp(&response.tpa, &zeroIP) == 0) {
+			fingerprint.correctARPProbeResponse  = true;
+		} else {
+			fingerprint.correctARPProbeResponse = false;
+		}
+	} else {
+		cout << "ERROR: Did not see a reply to our ARP probe" << endl;
+		fingerprint.correctARPProbeResponse = false;
+	}
+
+	cout << "Target correctly responded to ARP Probe: " << fingerprint.correctARPProbeResponse  << endl;
+
+	pthread_mutex_unlock(&cbLock);
+}
+
+
 int main(int argc, char ** argv)
 {
 	Config::Inst()->LoadArgs(argv, argc);
@@ -631,6 +710,11 @@ int main(int argc, char ** argv)
 	// should NOT be in the ARP cache before calling this
 	if (CI->m_test == 7) {
 		checkInitialUnsolictedReply();
+	}
+
+
+	if (CI->m_test == 8) {
+		checkIsIpUsedResponse();
 	}
 
 

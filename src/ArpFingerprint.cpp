@@ -13,6 +13,7 @@ ArpFingerprint::ArpFingerprint() {
 	unicastUpdate = false;
 	gratuitousReplyAddsCacheEntry = false;
 	hasFloodProtection = false;
+	correctARPProbeResponse = false;
 
 
 	for (int i = 0; i < 36; i++)
@@ -32,6 +33,7 @@ ArpFingerprint::ArpFingerprint(std::string tinyString) {
 	ss >> unicastUpdate;
 	ss >> gratuitousReplyAddsCacheEntry;
 	ss >> hasFloodProtection;
+	ss >> correctARPProbeResponse;
 
 	for (int i = 0; i < 36; i++) {
 		ss >> gratuitousUpdates[i];
@@ -51,6 +53,7 @@ string ArpFingerprint::toTinyString() {
 	ss << unicastUpdate << " ";
 	ss << gratuitousReplyAddsCacheEntry << " ";
 	ss << hasFloodProtection << " ";
+	ss << correctARPProbeResponse << " ";
 
 	for (int i = 0; i < 36; i++) {
 		ss << gratuitousUpdates[i] << " ";
@@ -72,6 +75,7 @@ string ArpFingerprint::toString() {
 	ss << "Got unicast (vs bcast) update request      : " << boolalpha << unicastUpdate << endl;
 	ss << "Unsolicited reply creates cache entry      : " << boolalpha << gratuitousReplyAddsCacheEntry << endl;
 	ss << "Target ignores rapid successive replies    : " << boolalpha << hasFloodProtection << endl;
+	ss << "Correctly responds to RFC5227 ARP Probe    : " << boolalpha << correctARPProbeResponse << endl;
 
 	ss << "Gratuitous probes result fingerprint       : ";
 	for (int i = 0; i < 36; i++) {
@@ -121,6 +125,9 @@ bool ArpFingerprint::operator ==(const ArpFingerprint &rhs) const {
 		return false;
 
 	if (hasFloodProtection != rhs.hasFloodProtection)
+		return false;
+
+	if (correctARPProbeResponse != rhs.correctARPProbeResponse)
 		return false;
 
 	for (int i = 0; i < 36; i++) {

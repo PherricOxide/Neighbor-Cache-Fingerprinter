@@ -41,6 +41,10 @@ public:
 	// Does the host appear to have ARP flood prevention by ignoring replies in quick succession?
 	bool hasFloodProtection;
 
+	// Does the host respond correctly to RFC5227 ARP Probes? Specifically we check if the
+	// reply tpa field is zero and set this false if so.
+	bool correctARPProbeResponse;
+
 	// Checks against 36 format combinations of gratuitous packets to see if the cache is updated
 	bool gratuitousUpdates[36];
 
@@ -78,7 +82,15 @@ struct ResponseBehavior
 	uint32_t m_minTimeBetweenRequests;
 	uint32_t m_maxTimebetweenRequests;
 
+
+	// Ethernet frame info
 	addr dstMac;
+	addr srcMac;
+
+	// This is the information taken from the last ARP response seen
+	// ARP reply info
+	bool sawArpReply;
+	addr tpa, tha, spa, sha;
 
 	ResponseBehavior()
 	{
@@ -86,6 +98,7 @@ struct ResponseBehavior
 		m_minTimeBetweenRequests = ~0;
 		requestAttempts = 0;
 		sawProbeReply = false;
+		sawArpReply = false;
 		replyToCorrectMAC = false;
 		replyBeforeARP = false;
 		averageTimeBetweenRequests = -1;

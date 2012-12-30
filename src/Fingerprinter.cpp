@@ -85,6 +85,9 @@ int Fingerprinter::CompareFingerprints(ArpFingerprint f1, ArpFingerprint f2) {
 	if (f1.hasFloodProtection != f2.hasFloodProtection)
 		differenceScore += 4;
 
+	if (f1.correctARPProbeResponse  != f2.correctARPProbeResponse)
+		differenceScore += 6;
+
 	for (int i = 0; i < 36; i++) {
 		if (f1.gratuitousUpdates[i] != f2.gratuitousUpdates[i]) {
 			differenceScore += 1;
