@@ -1,257 +1,279 @@
-﻿                                     __         _______    _______ 
-                                    ( (    /|  (  ____ \  (  ____ \
-                                    |  \  ( |  | (    \/  | (    \/
-                                    |   \ | |  | |        | (__    
-                                    | (\ \) |  | |        |  __)   
-                                    | | \   |  | |        | (      
-                                    | )  \  |  | (____/\  | )      
-                                    |/    )_)  (_______/  |/       
- 
-                                   Neighbor Cache Fingerprinter
+﻿                        __         _______    _______ 
+                       ( (    /|  (  ____ \  (  ____ \
+                       |  \  ( |  | (    \/  | (    \/
+                       |   \ | |  | |        | (__    
+                       | (\ \) |  | |        |  __)   
+                       | | \   |  | |        | (      
+                       | )  \  |  | (____/\  | )      
+                       |/    )_)  (_______/  |/       
 
-                Operating System Detection via Extrapolation of ARP Cache Characteristics
+                      Neighbor Cache Fingerprinter
 
-                                 Created by David Clark (PherricOxide)
+   Operating System Detection via Extrapolation of ARP Cache Characteristics
 
-===================================================================================================
-                                           Introduction
-===================================================================================================
+                    Created by David Clark (PherricOxide)
 
-WARNING: This research project still under development. Check back later for a more usable prototype.
+==============================================================================
+                               Introduction
+==============================================================================
 
-	What is the Neighbor Cache? The Neighbor Cache is an operating system's mapping of network
-addresses to link layer addresses maintained and updated via the protocol ARP (Address Resolution 
-Protocol) in IPv4 or NDP (Neighbor Discovery Protocol) in IPv6. The neighbor cache can be as simple
-as a lookup table updated everytime an ARP or NDP reply is seen, to something as complex as a cache
-that has multiple timeout values for each entry, which are updated based on positive feedback from
-higher level protocols and usage characteristics of that entry by the operating system's applications,
-along with restrictions on malformed or unsolicited update packets.
+WARNING: This research project still under development. Check back later for a
+more usable prototype.
 
-        This tool provides a mechanism for remote operating system detection by extrapolating 
-characteristics of the target system's underlying Neighbor Cache and general ARP behavior.
-Given the non-existence of any standard specification for how the Neighbor Cache should behave, 
-there several differences in operating system network stack implementations that can be used for 
-unique identification.
+	What is the Neighbor Cache? The Neighbor Cache is an operating system's
+mapping of network addresses to link layer addresses maintained and updated via
+the protocol ARP (Address Resolution Protocol) in IPv4 or NDP (Neighbor
+Discovery Protocol) in IPv6. The neighbor cache can be as simple as a lookup
+table updated everytime an ARP or NDP reply is seen, to something as complex as
+a cache that has multiple timeout values for each entry, which are updated based
+on positive feedback from higher level protocols and usage characteristics of
+that entry by the operating system's applications, along with restrictions on
+malformed or unsolicited update packets.
 
-        Traditional operating system fingerprinting tools such as nmap and xprobe2 rely on 
-creating fingerprints from higher level protocols such as TCP, UDP, and ICMP. The downside of
-these tools is that they usually require open TCP ports and responses to ICMP probes. This tool
-works by sending a TCP SYN packet to a port which can be either open or closed. The target machine
-will either respond with a SYN/ACK packet or a SYN/RST packet, but either way it must first discover
-the MAC address to send the reply to via queries to the ARP Neighbor Cache. This allows for 
-fingerprinting on target machines that have nothing but closed TCP ports and give no ICMP responses.
+	This tool provides a mechanism for remote operating system detection by
+extrapolating characteristics of the target system's underlying Neighbor Cache
+and general ARP behavior.  Given the non-existence of any standard specification
+for how the Neighbor Cache should behave, there several differences in operating
+system network stack implementations that can be used for unique identification.
 
-        The main disadvantage of this tool versus traditional fingerprinting is that because it's
-based on a Layer 2 protocol instead of a Layer 3 protocol, the target machine that is being tested 
-must reside on the same Ethernet broadcast domain (usually the same physical network). It also has
-the disadvantage of being fairly slow compared to other OS scanners (a scan can take ~5 minutes).
+	Traditional operating system fingerprinting tools such as nmap and
+xprobe2 rely on creating fingerprints from higher level protocols such as TCP,
+UDP, and ICMP. The downside of these tools is that they usually require open TCP
+ports and responses to ICMP probes. This tool works by sending a TCP SYN packet
+to a port which can be either open or closed. The target machine will either
+respond with a SYN/ACK packet or a SYN/RST packet, but either way it must first
+discover the MAC address to send the reply to via queries to the ARP Neighbor
+Cache. This allows for fingerprinting on target machines that have nothing but
+closed TCP ports and give no ICMP responses.
 
-===================================================================================================
-                                  ARP Packet Structure
-===================================================================================================
+	The main disadvantage of this tool versus traditional fingerprinting is
+that because it's based on a Layer 2 protocol instead of a Layer 3 protocol, the
+target machine that is being tested must reside on the same Ethernet broadcast
+domain (usually the same physical network). It also has the disadvantage of
+being fairly slow compared to other OS scanners (a scan can take ~5 minutes).
+
+==============================================================================
+                            ARP Packet Structure
+==============================================================================
 
 TODO
 
-===================================================================================================
-                             What does an NDP packet look like?
-===================================================================================================
 
-	Currently this tool doesn't support IPV6 and NDP, but it's on the TODO list.
+==============================================================================
+                            NDP Packet Structure
+==============================================================================
+
+Currently this tool doesn't support IPV6 and NDP, but it's on the TODO list.
 
 
-===================================================================================================
-                Fingerprint Technique: Number of ARP Requests
-===================================================================================================
+==============================================================================
+             Fingerprint Technique: Number of ARP Requests
+==============================================================================
 
-        When an operating system performs an ARP query it will often resend the request multiple
-times in case the request or the reply was lost. A simple count of the number of requests that
-are sent can provide a fingerprint feature. In addition, there can be differences in the number
-of responses to open and closed ports due to multiple retries on the higher level protocols, and
-attempting to send a probe multiple times can result in different numbers of ARP requests (Android
-will initially send 2 ARP requests, but the second time it will only send 1).
+	When an operating system performs an ARP query it will often resend the
+request multiple times in case the request or the reply was lost. A simple count
+of the number of requests that are sent can provide a fingerprint feature. In
+addition, there can be differences in the number of responses to open and closed
+ports due to multiple retries on the higher level protocols, and attempting to
+send a probe multiple times can result in different numbers of ARP requests
+(Android will initially send 2 ARP requests, but the second time it will only
+send 1).
 
 For example, 
+
         Windows XP:  Sends 1 request
-
-        Windows 7:   Sends 3 if probe to closed port
-                     Sends 9 if probe to open port
-
-        Linux:       Sends 3 requests
-
+	Windows 7:   Sends 3 if probe to closed port (9 if probe to open port)
+	Linux:       Sends 3 requests
 	Android 3:  Sends 2 requests the first probe, then 1 request after
 
 A minimum and maximum number of requests seen is recorded in the fingerprint.
 
-===================================================================================================
-                Fingerprint Technique: Timing of ARP Request Retries
-===================================================================================================
+==============================================================================
+               Fingerprint Technique: Timing of ARP Request Retries
+==============================================================================
 
-        On hosts that retry ARP requests, the timing values can be used to deduce more information.
-Linux hosts generally have a constant retry time of 1 second, while Windows hosts generally 
-back off on the timing, sending their first retry after between 500ms and 1s, and their second retry 
-after 1 second.
+	On hosts that retry ARP requests, the timing values can be used to
+deduce more information.  Linux hosts generally have a constant retry time of 1
+second, while Windows hosts generally back off on the timing, sending their
+first retry after between 500ms and 1s, and their second retry after 1 second.
 
-	The fingerprint contains the minimum time difference between requests seen, maximum time 
-difference, and a boolean value indicating if the time differences are constant or changing 
-
-
-===================================================================================================
-                Fingerprint Technique: Time before cache entry expires
-===================================================================================================
-
-        After a proper request/reply ARP exchange, the Neighbor Cache gets an entry put in it for
-the IP address and for a certain amount of time communication will continue without additional ARP
-requests. At some point, the operating system will decide the entry in the cache is stale and make
-an attempt to update it by sending a new ARP request. 
-
-	To test this a SYN packet is sent, an ARP exchange happens, and then SYN packets are sent
-once per second until another ARP request is seen. 
-
-Operating system response examples,
-        Windows XP                     : Timeout after 10 minutes (if referred to, else 2 minutes)
-        Windows 7/Vista/Server 2008    : Timeout between 15 seconds and 45 seconds
-        Freebsd                        : Timeout after 20 minutes
-        Linux                          : Timeout usually 30 seconds (base_reachable_time + delay_first_probe_time)
-
-	More research needs to be done on the best way to capture the values of delay_first_probe_time
-and differences between stale timing and actually falling out of the table and being gc'ed in Linux.
-
-	Waiting 20 minutes to finish the OS scan is infeasible in most cases, so the fingerprinting
-mode only waits about 60 seconds. This may be changed later to make it easier to detect an oddity in 
-older windows targets where cache entries expire faster if they aren't used (TODO).
-
-===================================================================================================
-                Fingerprint Technique: Response to Gratuitous ARP Replies
-===================================================================================================
-
-        A gratuitous or unsolicited ARP reply is an ARP reply for which there was no request. 
-The usual use case for this is notification of machines on the network of IP changes or systems
-coming online. The problem for implementers is that several of the fields in the ARP packet no longer 
-make much sense. 
-
-	Who is the Target Protocol Address for the ARP packet? The broadcast address? Zero? The 
-specification surprisingly says neither: the target Protocol address should be the same IP address
- as the Sender Protocol Address.
-
-	When there's no specific target for the ARP packet, the Target Hardware Address also becomes 
-a confusing field. The specification says it's value shouldn't matter, but should be set to zero. 
-However, most implementations will use the Ethernet broadcast address of FF:FF:FF:FF:FF instead, 
-because internally they have some function to send an ARP reply that only takes one argument for 
-the destination MAC address (and is put in both the Ethernet frame destination and the ARP packet's
-Target Hardware Address). We can also experiment with setting the Target Hardware Address to the 
-same thing as the Sender Hardware Address (the same method the spec says to use for the Target Protocol field).
-
-	Even the ARP opcode becomes confusing in the case of unsolicited ARP packets. Is it a "request"
-for other machines to update their cache? Or is it a "reply", even though it isn't a reply to anything? 
-Most operating systems will update their cache no matter the opcode.
-
-	There are several variations of the gratuitous ARP packet that can be generated by changing the 
-following fields,
-
-        Ethernet Frame Destination Address: Ethernet bcast, or the MAC of the host we're probing
-        ARP Target Hardware Address       : 0, Ethernet bcast, or the MAC of the host we're probing
-        ARP Target Protocol Address       : 0 or the IP address of the host we're probing
-        ARP Opcode                        : REPLY or REQUEST
-
-	There is also a lot of fuzzyness about what the target hardware/protocol addresses and opcode
-should be, which can be leveraged to provide useful OS version information.
-
-        Most operating systems have the interesting behavior that they will ignore gratuitous ARP
-packets if the sender is not in the Neighbor Cache already, but if the sender is in the Neighbor
-Cache, they will update the MAC address, and in some operating systems also update the timeouts.
+	The fingerprint contains the minimum time difference between requests
+seen, maximum time difference, and a boolean value indicating if the time
+differences are constant or changing 
 
 
-The following sequence shows the testing technique for this feature,
+==============================================================================
+             Fingerprint Technique: Time before cache entry expires
+==============================================================================
 
-	Send an ARP packet that is known to update most caches with srcmac = srcMacArg
-	Send the gratuitous ARP packet that is currently being tested with srcmac = srcMacArg + 1
-	Send a probe packet with a source MAC address of srcMacArg in the Ethernet frame
+	After a proper request/reply ARP exchange, the Neighbor Cache gets an
+entry put in it for the IP address and for a certain amount of time
+communication will continue without additional ARP requests. At some point, the
+operating system will decide the entry in the cache is stale and make an attempt
+to update it by sending a new ARP request. 
 
-	The first packet attempts to get the cache entry into a known state: up to date and storing
-the source MAC address that is our default or the command line arguement --srcmac. The following
-ARP packet is the actual probe permutation that's being tested.
+	To test this a SYN packet is sent, an ARP exchange happens, and then SYN
+packets are sent once per second until another ARP request is seen. 
 
-	If the reply to the probe packet is to (srcMacArg + 1), then we know the gratuitous packet
-successfully updated the cache entry. If the reply to the probe is just (srcMacArg), then we know
-the cache was not updated and still contains the old value.
+Operating system response examples, 
 
-	The reason the Ethernet frame source MAC address in the probe is set to the original srcMacArg
-is to ensure the target isn't just replying to the MAC address it sees packets from and is really 
-pulling the entry out of ARP.
+Windows XP                  : Timeout after 10 minutes (if refered to)
+Windows 7/Vista/Server 2008 : Timeout between 15 seconds and 45 seconds
+Freebsd                     : Timeout after 20 minutes 
+Linux                       : Timeout usually around 30 seconds
 
-	Sometimes the Neighbor Cache entry will get into a state that makes it ignore gratuitous
-packets even though, given a normal state, it would accept them and update the entry. This can
-result in some timing related result changes. For now I haven't made an attempt to fix this
+	More research needs to be done on the best way to capture the values of
+delay_first_probe_time and differences between stale timing and actually falling
+out of the table and being gc'ed in Linux.
+
+	Waiting 20 minutes to finish the OS scan is infeasible in most cases, so
+the fingerprinting mode only waits about 60 seconds. This may be changed later
+to make it easier to detect an oddity in older windows targets where cache
+entries expire faster if they aren't used (TODO).
+
+==============================================================================
+           Fingerprint Technique: Response to Gratuitous ARP Replies
+==============================================================================
+
+	A gratuitous or unsolicited ARP reply is an ARP reply for which there
+was no request.  The usual use case for this is notification of machines on the
+network of IP changes or systems coming online. The problem for implementers is
+that several of the fields in the ARP packet no longer make much sense. 
+
+	Who is the Target Protocol Address for the ARP packet? The broadcast
+address? Zero? The specification surprisingly says neither: the target Protocol
+address should be the same IP address as the Sender Protocol Address.
+
+	When there's no specific target for the ARP packet, the Target Hardware
+Address also becomes a confusing field. The specification says it's value
+shouldn't matter, but should be set to zero.  However, most implementations will
+use the Ethernet broadcast address of FF:FF:FF:FF:FF instead, because internally
+they have some function to send an ARP reply that only takes one argument for
+the destination MAC address (and is put in both the Ethernet frame destination
+and the ARP packet's Target Hardware Address). We can also experiment with
+setting the Target Hardware Address to the same thing as the Sender Hardware
+Address (the same method the spec says to use for the Target Protocol field).
+
+	Even the ARP opcode becomes confusing in the case of unsolicited ARP
+packets. Is it a "request" for other machines to update their cache? Or is it a
+"reply", even though it isn't a reply to anything?  Most operating systems will
+update their cache no matter the opcode.
+
+	There are several variations of the gratuitous ARP packet that can be
+generated by changing the following fields,
+
+Ethernet Frame Destination Address : Bcast or the MAC of our target
+ARP Target Hardware Address        : 0, bcast, or the MAC of our target
+ARP Target Protocol Address        : 0 or the IP address of our target
+ARP Opcode                         : REPLY or REQUEST
+
+	This relsults in 36 different gratuitous packet permutations.	
+
+	Most operating systems have the interesting behavior that they will
+ignore gratuitous ARP packets if the sender is not in the Neighbor Cache
+already, but if the sender is in the Neighbor Cache, they will update the MAC
+address, and in some operating systems also update the timeouts.
 
 
-===================================================================================================
-		Fingerprint Technique: Can we get put into the cache with a gratuitous packet?
-===================================================================================================
+	The following sequence shows the testing technique for this feature,
 
-	As mentioned in the last section, most operating systems won't add a new entry to the cache
-given a gratuitous ARP packet, but they will update existing entries. One of the few differences
-between Windows XP and FreeBSD's fingerprint is that we can place an entry in the cache by sending
-a certain gratuitous packet to a FreeBSD machine, and test if it was in the cache by seeing if a 
+Send ARP packet that is known to update most caches with srcmac = srcMacArg
+Send gratuitous ARP packet that is currently being tested with srcmac = srcMacArg + 1
+Send probe packet with a source MAC address of srcMacArg in the Ethernet frame
+
+	The first packet attempts to get the cache entry into a known state: up
+to date and storing the source MAC address that is our default or the command
+line arguement --srcmac. The following ARP packet is the actual probe
+permutation that's being tested.
+
+	If the reply to the probe packet is to (srcMacArg + 1), then we know the
+gratuitous packet successfully updated the cache entry. If the reply to the
+probe is just (srcMacArg), then we know the cache was not updated and still
+contains the old value.
+
+	The reason the Ethernet frame source MAC address in the probe is set to
+the original srcMacArg is to ensure the target isn't just replying to the MAC
+address it sees packets from and is really pulling the entry out of ARP.
+
+	Sometimes the Neighbor Cache entry will get into a state that makes it
+ignore gratuitous packets even though, given a normal state, it would accept
+them and update the entry. This can result in some timing related result
+changes. For now I haven't made an attempt to fix this
+
+
+==============================================================================
+Fingerprint Technique: Can we get put into the cache with a gratuitous packet?
+==============================================================================
+
+	As mentioned in the last section, most operating systems won't add a new
+entry to the cache given a gratuitous ARP packet, but they will update existing
+entries. One of the few differences between Windows XP and FreeBSD's fingerprint
+is that we can place an entry in the cache by sending a certain gratuitous
+packet to a FreeBSD machine, and test if it was in the cache by seeing if a
 probe gets a response or not.
 
-===================================================================================================
-		Fingerprint Technique: ARP Flood Prevention (Ignored rapid ARP replies)
-===================================================================================================
+==============================================================================
+Fingerprint Technique: ARP Flood Prevention (Ignored rapid ARP replies)
+==============================================================================
 
 RFC1122 (Requirements for Internet Hosts) states,
 
-	A mechanism to prevent ARP flooding (repeatedly sending an
-        ARP Request for the same IP address, at a high rate) MUST be
-        included.  The recommended maximum rate is 1 per second per destination.
+	"A mechanism to prevent ARP flooding (repeatedly sending an ARP Request
+   for the same IP address, at a high rate) MUST be included.  The recommended
+   maximum rate is 1 per second per destination."
 
-	Linux will not only ignore duplicate REQUEST packets within a certain time, but also duplicate 
-REPLY packets. We can test this by sending a set of unsolicited ARP replies within a short time
-range with differenc MAC addresses being reported by each reply. Sending a probe will reveal in
-the probe response destination MAC address if the host responds to the first MAC address we ARPed
+	Linux will not only ignore duplicate REQUEST packets within a certain
+time, but also duplicate REPLY packets. We can test this by sending a set of
+unsolicited ARP replies within a short time range with differenc MAC addresses
+being reported by each reply. Sending a probe will reveal in the probe response
+destination MAC address if the host responds to the first MAC address we ARPed
 or the last, indicating if it ignored the later rapid replies.
 
 
-===================================================================================================
-		Fingerprint Technique: Correct Reply to RFC5227 ARP Probe
-===================================================================================================
+==============================================================================
+       Fingerprint Technique: Correct Reply to RFC5227 ARP Probe
+==============================================================================
 
-	This test sends an "ARP Probe" as defined by RFC 5227 (IPv4 Address Conflict Detection) and
-checks the response to see if it confirms to the specification. The point of the ARP Probe is to 
-check if an IP address is being used without the risk of accidently causing someone's ARP cache to
-update with your own MAC address when it sees your query. Given that you're likely trying to tell if
-an IP address is being used because you want to claim it, you likely don't have an IP address of your
-own yet, so the Sender Protocol Address field is set to 0 in the ARP REQUEST.
+	This test sends an "ARP Probe" as defined by RFC 5227 (IPv4 Address
+Conflict Detection) and checks the response to see if it confirms to the
+specification. The point of the ARP Probe is to check if an IP address is being
+used without the risk of accidently causing someone's ARP cache to update with
+your own MAC address when it sees your query. Given that you're likely trying to
+tell if an IP address is being used because you want to claim it, you likely
+don't have an IP address of your own yet, so the Sender Protocol Address field
+is set to 0 in the ARP REQUEST.
 
 The RFC specifies the response as,
 
-  (the probed host) MAY elect to attempt to defend its address by
-   ... broadcasting one single ARP Announcement, giving its own
-   IP and hardware addresses as the sender addresses of the ARP,
-   with the 'target IP address' set to its own IP address, and the
-   'target hardware address' set to all zeroes.
+      "(the probed host) MAY elect to attempt to defend its address by ...
+   broadcasting one single ARP Announcement, giving its own IP and hardware
+   addresses as the sender addresses of the ARP, with the 'target IP address' set
+   to its own IP address, and the 'target hardware address' set to all zeroes."
 
-  But any Linux kernel older than 2.6.24 and some other operating systems will respond incorrectly,
-with a packet that has tpa == spa and tha == sha. Checking if tpa == 0 has proven sufficient for
-a boolean fingerprint feature.
+  But any Linux kernel older than 2.6.24 and some other operating systems will
+respond incorrectly, with a packet that has tpa == spa and tha == sha. Checking
+if tpa == 0 has proven sufficient for a boolean fingerprint feature.
 
 
-===================================================================================================
-                        TODO RESEARCH IN PROGRESS
-	Fingerprint Technique: Feedback from higher protocols extending timeout values
-===================================================================================================
+==============================================================================
+                  TODO RESEARCH IN PROGRESS Fingerprint Technique
+               Feedback from higher protocols extending timeout values
+==============================================================================
 
-	Linux has the ability to extend timeout values if there's positive feedback from higher level
-protocols, such as a 3 way TCP handshake. Need to write tests for this and do some source diving
-in the kernel to see what else counts besides a 3 way handshake for positive feedback.
+	Linux has the ability to extend timeout values if there's positive
+feedback from higher level protocols, such as a 3 way TCP handshake. Need to
+write tests for this and do some source diving in the kernel to see what else
+counts besides a 3 way handshake for positive feedback.
 
-===================================================================================================
-                        TODO RESEARCH IN PROGRESS
-	Fingerprint Technique: Infer Neighbor Cache size by flooding to cause entry dumping
-===================================================================================================
+==============================================================================
+             TODO RESEARCH IN PROGRESS Fingerprint Technique
+        Infer Neighbor Cache size by flooding to cause entry dumping
+==============================================================================
 
-	Can we fill the ARP table with garbage entries in order for it to start dumping old ones? 
-Can we reliably use this to infer the table size, even with Linux's near random 
-cache garbage collection rules? Can we do this on class A networks, or do we really
-need class B network subnets in order to make this a viable test?
+	Can we fill the ARP table with garbage entries in order for it to start
+dumping old ones?  Can we reliably use this to infer the table size, even with
+Linux's near random cache garbage collection rules? Can we do this on class A
+networks, or do we really need class B network subnets in order to make this a
+viable test?
 
 
