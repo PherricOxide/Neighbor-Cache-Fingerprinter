@@ -28,9 +28,10 @@ higher level protocols and usage characteristics of that entry by the operating 
 along with restrictions on malformed or unsolicited update packets.
 
         This tool provides a mechanism for remote operating system detection by extrapolating 
-characteristics of the target system's underlying Neighbor Cache. Given the non-existence of any 
-standard specification for how the Neighbor Cache should behave, there several differences in 
-operating system network stack implementations that can be used for unique identification.
+characteristics of the target system's underlying Neighbor Cache and general ARP behavior.
+Given the non-existence of any standard specification for how the Neighbor Cache should behave, 
+there several differences in operating system network stack implementations that can be used for 
+unique identification.
 
         Traditional operating system fingerprinting tools such as nmap and xprobe2 rely on 
 creating fingerprints from higher level protocols such as TCP, UDP, and ICMP. The downside of
@@ -42,7 +43,8 @@ fingerprinting on target machines that have nothing but closed TCP ports and giv
 
         The main disadvantage of this tool versus traditional fingerprinting is that because it's
 based on a Layer 2 protocol instead of a Layer 3 protocol, the target machine that is being tested 
-must reside on the same Ethernet broadcast domain (usually the same physical network).
+must reside on the same Ethernet broadcast domain (usually the same physical network). It also has
+the disadvantage of being fairly slow compared to other OS scanners (a scan can take ~5 minutes).
 
 ===================================================================================================
                                   ARP Packet Structure
