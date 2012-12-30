@@ -11,6 +11,24 @@ AC_PROG_CXX
 AC_PROG_CC
 
 # Checks for libraries.
+function foundLibFailed {
+        AC_MSG_NOTICE([])
+        AC_MSG_NOTICE([])
+        AC_MSG_ERROR([!ERROR! Cannot find library '$1'. Please attempt to solve this problem !ERROR!])
+}
+
+
+# Checks for libraries.
+AC_CHECK_LIB([pcap], [pcap_create], [], [foundLibFailed 'pcap'])
+AC_CHECK_LIB([pthread], [pthread_create], [], [foundLibFailed 'pthread'])
+
+# Check for boost
+m4_include([m4/ax_boost_base.m4])
+m4_include([m4/ax_boost_program_options.m4])
+
+AX_BOOST_BASE(1.42)
+AX_BOOST_PROGRAM_OPTIONS
+
 
 # Checks for header files.
 
