@@ -35,6 +35,9 @@ void Fingerprinter::LoadFingerprints() {
 				m_fingerprints.push_back(fingerprint);
 				//cout << "Loading   " << line << endl;
 				//cout << "Loaded in " << fingerprint.toTinyString() << endl << endl;
+
+				if (line != fingerprint.toTinyString())
+					cout << "Possible error reading fingerprint for " << fingerprintName << endl;
 			}
 		}
 		fingerprintFile.close();
