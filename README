@@ -58,10 +58,11 @@ being fairly slow compared to other OS scanners (a scan can take ~5 minutes).
 
 	First, you must get the following dependencies,
 		boost-program-options
-		pcap
+		pcap library
+		dumbnet library
 
 	On Ubuntu this can be done with the standard package manager with,
-		sudo apt-get install libboost-program-options-dev libpcap-dev
+		sudo apt-get install libboost-program-options-dev libpcap-dev libdumbnet-dev
 
 	Then build with the standard commands,
 		./configure
