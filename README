@@ -23,8 +23,8 @@ more usable prototype.
 	What is the Neighbor Cache? The Neighbor Cache is an operating system's
 mapping of network addresses to link layer addresses maintained and updated via
 the protocol ARP (Address Resolution Protocol) in IPv4 or NDP (Neighbor
-Discovery Protocol) in IPv6. The neighbor cache can be as simple as a lookup
-table updated everytime an ARP or NDP reply is seen, to something as complex as
+Discovery Protocol) in IPv6. The Neighbor Cache can be as simple as a lookup
+table updated every time an ARP or NDP reply is seen, to something as complex as
 a cache that has multiple timeout values for each entry, which are updated based
 on positive feedback from higher level protocols and usage characteristics of
 that entry by the operating system's applications, along with restrictions on
@@ -36,7 +36,7 @@ and general ARP behavior.  Given the non-existence of any standard specification
 for how the Neighbor Cache should behave, there several differences in operating
 system network stack implementations that can be used for unique identification.
 
-	Traditional operating system fingerprinting tools such as nmap and
+	Traditional operating system fingerprinting tools such as Nmap and
 xprobe2 rely on creating fingerprints from higher level protocols such as TCP,
 UDP, and ICMP. The downside of these tools is that they usually require open TCP
 ports and responses to ICMP probes. This tool works by sending a TCP SYN packet
@@ -56,10 +56,14 @@ being fairly slow compared to other OS scanners (a scan can take ~5 minutes).
                             Tool Installation
 ==============================================================================
 
-	First, get the dependency Boost Program Options via your system's
-package manager. In Ubuntu: sudo apt-get install libboost-program-options-dev
+	First, you must get the following dependencies,
+		boost-program-options
+		pcap
 
-	Then build with the standard,
+	On Ubuntu this can be done with the standard package manager with,
+		sudo apt-get install libboost-program-options-dev libpcap-dev
+
+	Then build with the standard commands,
 		./configure
 		make
 		sudo make install
@@ -69,7 +73,7 @@ package manager. In Ubuntu: sudo apt-get install libboost-program-options-dev
                             Tool Usage
 ==============================================================================
 
-	Details of the command line arguments can be gotten by running,
+	Details of the command line arguments are provided by the --help flag,
 
 		neighbor-fingerprint --help
 
@@ -82,10 +86,10 @@ package manager. In Ubuntu: sudo apt-get install libboost-program-options-dev
 	network. Several tests depend on the fact that this spoofed source IP
 	address is not already in the ARP cache of the machine being scanned.
 	If you know your network well, you can choose an IP address you know
-	is unused. If not, you'll need to use a tool like nmap or arp-scan
+	is unused. If not, you'll need to use a tool like Nmap or arp-scan
 	to find an unused IP address to use. You'll also have to change the
 	srcip if you rerun the tool to ensure the most accurate results,
-	as some systems will keep the IP in their ARP cache for up to 20 mins.
+	as some systems will keep the IP in their ARP cache for up to 20 minutes.
 
 	Note: The default fingerprint scan takes about 5 minutes.
 
@@ -95,7 +99,7 @@ package manager. In Ubuntu: sudo apt-get install libboost-program-options-dev
 ==============================================================================
 
 	When an operating system performs an ARP query it will often resend the
-request multiple times in case the request or the reply was lost. A simple count
+request multiple times in case the request or reply was lost. A simple count
 of the number of requests that are sent can provide a fingerprint feature. In
 addition, there can be differences in the number of responses to open and closed
 ports due to multiple retries on the higher level protocols, and attempting to
@@ -119,7 +123,7 @@ A minimum and maximum number of requests seen is recorded in the fingerprint.
 	On hosts that retry ARP requests, the timing values can be used to
 deduce more information.  Linux hosts generally have a constant retry time of 1
 second, while Windows hosts generally back off on the timing, sending their
-first retry after between 500ms and 1s, and their second retry after 1 second.
+first retry between 500ms and 1s later, and their second retry after 1 second.
 
 	The fingerprint contains the minimum time difference between requests
 seen, maximum time difference, and a boolean value indicating if the time
@@ -141,7 +145,7 @@ packets are sent once per second until another ARP request is seen.
 
 Operating system response examples, 
 
-Windows XP                  : Timeout after 10 minutes (if refered to)
+Windows XP                  : Timeout after 10 minutes (if referred to)
 Windows 7/Vista/Server 2008 : Timeout between 15 seconds and 45 seconds
 Freebsd                     : Timeout after 20 minutes 
 Linux                       : Timeout usually around 30 seconds
@@ -165,8 +169,8 @@ network of IP changes or systems coming online. The problem for implementers is
 that several of the fields in the ARP packet no longer make much sense. 
 
 	Who is the Target Protocol Address for the ARP packet? The broadcast
-address? Zero? The specification surprisingly says neither: the target Protocol
-address should be the same IP address as the Sender Protocol Address.
+address? Zero? The specification surprisingly says neither: the Target Protocol
+Address should be the same IP address as the Sender Protocol Address.
 
 	When there's no specific target for the ARP packet, the Target Hardware
 Address also becomes a confusing field. The specification says it's value
@@ -191,7 +195,7 @@ ARP Target Hardware Address        : 0, bcast, or the MAC of our target
 ARP Target Protocol Address        : 0 or the IP address of our target
 ARP Opcode                         : REPLY or REQUEST
 
-	This relsults in 36 different gratuitous packet permutations.	
+	This results in 36 different gratuitous packet permutations.	
 
 	Most operating systems have the interesting behavior that they will
 ignore gratuitous ARP packets if the sender is not in the Neighbor Cache
@@ -248,7 +252,7 @@ RFC1122 (Requirements for Internet Hosts) states,
 
 	Linux will not only ignore duplicate REQUEST packets within a certain
 time, but also duplicate REPLY packets. We can test this by sending a set of
-unsolicited ARP replies within a short time range with differenc MAC addresses
+unsolicited ARP replies within a short time range with different MAC addresses
 being reported by each reply. Sending a probe will reveal in the probe response
 destination MAC address if the host responds to the first MAC address we ARPed
 or the last, indicating if it ignored the later rapid replies.
@@ -261,7 +265,7 @@ or the last, indicating if it ignored the later rapid replies.
 	This test sends an "ARP Probe" as defined by RFC 5227 (IPv4 Address
 Conflict Detection) and checks the response to see if it confirms to the
 specification. The point of the ARP Probe is to check if an IP address is being
-used without the risk of accidently causing someone's ARP cache to update with
+used without the risk of accidentally causing someone's ARP cache to update with
 your own MAC address when it sees your query. Given that you're likely trying to
 tell if an IP address is being used because you want to claim it, you likely
 don't have an IP address of your own yet, so the Sender Protocol Address field
@@ -272,7 +276,7 @@ The RFC specifies the response as,
       "(the probed host) MAY elect to attempt to defend its address by ...
    broadcasting one single ARP Announcement, giving its own IP and hardware
    addresses as the sender addresses of the ARP, with the 'target IP address' set
-   to its own IP address, and the 'target hardware address' set to all zeroes."
+   to its own IP address, and the 'target hardware address' set to all zeros."
 
   But any Linux kernel older than 2.6.24 and some other operating systems will
 respond incorrectly, with a packet that has tpa == spa and tha == sha. Checking
