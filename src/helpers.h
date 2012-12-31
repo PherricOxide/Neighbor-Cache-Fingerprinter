@@ -26,4 +26,6 @@ void addr_pack_eth(addr* addr, uint8_t* eth);
 
 void addr_pack_ip(addr* addr, uint8_t* ip);
 
+addr GetInterfaceIP(const char *dev);
+
 #endif

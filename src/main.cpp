@@ -219,47 +219,31 @@ void ConfigureDestinationMAC() {
 			CI->m_dstmac = response.sha;
 			cout << "Setting target MAC address to " << addr_ntoa(&response.sha) << endl;
 		} else {
-
 			// We try again, but this time use our real IP address (if we have one)
 			pthread_mutex_unlock(&cbLock);
 			ResetResponse(true);
 
-			struct intf_entry interface;
-			intf_t * i = intf_open();
-			if (i == NULL) {
-				cout << "ERROR: intf_open returned NULL!" << endl;
+			addr localInterfaceIp = GetInterfaceIP(CI->m_interface.c_str());
+
+			if (localInterfaceIp.addr_type != ADDR_TYPE_IP) {
+				cout << "ERROR: Interface does not appear to have an IPv4 address." << endl;
 				cout << "ERROR: Did not see a reply to our ARP probe! Unable to perform scan." << endl;
 				cout << "Please check that the target host is up. If it is, you can specify it's MAC with --dstmac to bypass this step." << endl;
 				exit(1);
+			}
+
+			prober.SendARPReply(&CI->m_srcmac, &broadcastMAC, &localInterfaceIp, &CI->m_dstip, ARP_OP_REQUEST, &zeroMAC);
+			sleep(2);
+
+			pthread_mutex_lock(&cbLock);
+
+			if(response.sawArpReply) {
+				CI->m_dstmac = response.sha;
+				cout << "Setting target MAC address to " << addr_ntoa(&response.sha) << endl;
 			} else {
-		        strcpy(interface.intf_name, CI->m_interface.c_str());
-				if (intf_get(i, &interface) < 0) {
-					cout << "ERROR: Unable to get IP address of interface" << endl;
-					cout << "ERROR: Did not see a reply to our ARP probe! Unable to perform scan." << endl;
-					cout << "Please check that the target host is up. If it is, you can specify it's MAC with --dstmac to bypass this step." << endl;
-					exit(1);
-				}
-
-				if (interface.intf_addr.addr_type != ADDR_TYPE_IP) {
-					cout << "ERROR: Interface does not appear to have an IPv4 address." << endl;
-					cout << "ERROR: Did not see a reply to our ARP probe! Unable to perform scan." << endl;
-					cout << "Please check that the target host is up. If it is, you can specify it's MAC with --dstmac to bypass this step." << endl;
-					exit(1);
-				}
-
-				prober.SendARPReply(&CI->m_srcmac, &broadcastMAC, &interface.intf_addr, &CI->m_dstip, ARP_OP_REQUEST, &zeroMAC);
-				sleep(2);
-
-				pthread_mutex_lock(&cbLock);
-
-				if(response.sawArpReply) {
-					CI->m_dstmac = response.sha;
-					cout << "Setting target MAC address to " << addr_ntoa(&response.sha) << endl;
-				} else {
-					cout << "ERROR: Did not see a reply to our ARP probe! Unable to perform scan." << endl;
-					cout << "Please check that the target host is up. If it is, you can specify it's MAC with --dstmac to bypass this step." << endl;
-					exit(1);
-				}
+				cout << "ERROR: Did not see a reply to our ARP probe! Unable to perform scan." << endl;
+				cout << "Please check that the target host is up. If it is, you can specify it's MAC with --dstmac to bypass this step." << endl;
+				exit(1);
 			}
 		}
 
@@ -638,7 +622,7 @@ int main(int argc, char ** argv)
 	addr_pack_eth(&zeroMAC, &zeroMacNumber[0]);
 
 	stringstream pcapFilterString;
-	pcapFilterString << "arp or (dst host " << CI->m_srcipString << ")";
+	pcapFilterString << "arp or (dst net " << CI->m_srcipString << ")";
 
 	pthread_mutex_init(&cbLock, NULL);
 
