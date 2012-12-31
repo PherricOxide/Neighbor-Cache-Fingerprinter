@@ -89,6 +89,10 @@ else
      AC_MSG_RESULT(no)
 fi
 
+AC_SUBST(DNETCOMPAT)
+AC_SUBST(DNETINC)
+AC_SUBST(DNETLIB)
+
 # Checks for header files.
 
 # Checks for typedefs, structures, and compiler characteristics.
