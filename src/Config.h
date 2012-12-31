@@ -17,7 +17,7 @@
 
 #include <boost/program_options.hpp>
 #include <string>
-#include <dumbnet.h>
+#include <dnet.h>
 
 #define CI Config::Inst()
 namespace po = boost::program_options;

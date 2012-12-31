@@ -18,7 +18,7 @@
 #ifndef HELPERS_H_
 #define HELPERS_H_
 
-#include <dumbnet.h>
+#include <dnet.h>
 
 // Some helpers for address packing
 

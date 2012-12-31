@@ -15,7 +15,7 @@
 //   along with this software.  If not, see <http://www.gnu.org/licenses/>.
 //============================================================================
 
-#include <dumbnet.h>
+#include <dnet.h>
 #include <pthread.h>
 
 class Prober {

@@ -18,7 +18,7 @@
 #ifndef ARPFINGERPRINT_H
 #define ARPFINGERPRINT_H
 
-#include <dumbnet.h>
+#include <dnet.h>
 
 #include <sstream>
 #include <stdint.h>

@@ -48,14 +48,23 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am__objects_1 = FilePacketCapture.$(OBJEXT) \
+am__objects_1 = neighbor_fingerprint-FilePacketCapture.$(OBJEXT) \
+	neighbor_fingerprint-InterfacePacketCapture.$(OBJEXT) \
+	neighbor_fingerprint-PacketCapture.$(OBJEXT) \
+	neighbor_fingerprint-Config.$(OBJEXT) \
+	neighbor_fingerprint-Probes.$(OBJEXT) \
+	neighbor_fingerprint-helpers.$(OBJEXT) \
+	neighbor_fingerprint-ArpFingerprint.$(OBJEXT) \
+	neighbor_fingerprint-Fingerprinter.$(OBJEXT)
+am_neighbor_fingerprint_OBJECTS = $(am__objects_1) \
+	neighbor_fingerprint-main.$(OBJEXT)
+neighbor_fingerprint_OBJECTS = $(am_neighbor_fingerprint_OBJECTS)
+neighbor_fingerprint_DEPENDENCIES =
+am__objects_2 = FilePacketCapture.$(OBJEXT) \
 	InterfacePacketCapture.$(OBJEXT) PacketCapture.$(OBJEXT) \
 	Config.$(OBJEXT) Probes.$(OBJEXT) helpers.$(OBJEXT) \
 	ArpFingerprint.$(OBJEXT) Fingerprinter.$(OBJEXT)
-am_neighbor_fingerprint_OBJECTS = $(am__objects_1) main.$(OBJEXT)
-neighbor_fingerprint_OBJECTS = $(am_neighbor_fingerprint_OBJECTS)
-neighbor_fingerprint_DEPENDENCIES =
-am_test_OBJECTS = $(am__objects_1) TEST.$(OBJEXT)
+am_test_OBJECTS = $(am__objects_2) TEST.$(OBJEXT)
 test_OBJECTS = $(am_test_OBJECTS)
 am__DEPENDENCIES_1 =
 test_DEPENDENCIES = $(am__DEPENDENCIES_1)
@@ -169,7 +178,8 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CFLAGS = --pedantic -Wall -std=c11 -O0
-neighbor_fingerprint_LDADD = -lpcap -lpthread -ldumbnet -lboost_program_options
+neighbor_fingerprint_LDADD = -lpcap -lpthread @DNETLIB@ -lboost_program_options
+neighbor_fingerprint_CPPFLAGS = -I$(top_srcdir)/@DNETCOMPAT@ -I$(top_srcdir)/compat
 SOURCES = FilePacketCapture.cpp \
 		InterfacePacketCapture.cpp \
 		PacketCapture.cpp \
@@ -278,7 +288,15 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Probes.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TEST.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/helpers.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/neighbor_fingerprint-ArpFingerprint.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/neighbor_fingerprint-Config.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/neighbor_fingerprint-FilePacketCapture.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/neighbor_fingerprint-Fingerprinter.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/neighbor_fingerprint-InterfacePacketCapture.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/neighbor_fingerprint-PacketCapture.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/neighbor_fingerprint-Probes.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/neighbor_fingerprint-helpers.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/neighbor_fingerprint-main.Po@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -293,6 +311,132 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+neighbor_fingerprint-FilePacketCapture.o: FilePacketCapture.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT neighbor_fingerprint-FilePacketCapture.o -MD -MP -MF $(DEPDIR)/neighbor_fingerprint-FilePacketCapture.Tpo -c -o neighbor_fingerprint-FilePacketCapture.o `test -f 'FilePacketCapture.cpp' || echo '$(srcdir)/'`FilePacketCapture.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/neighbor_fingerprint-FilePacketCapture.Tpo $(DEPDIR)/neighbor_fingerprint-FilePacketCapture.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='FilePacketCapture.cpp' object='neighbor_fingerprint-FilePacketCapture.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o neighbor_fingerprint-FilePacketCapture.o `test -f 'FilePacketCapture.cpp' || echo '$(srcdir)/'`FilePacketCapture.cpp
+
+neighbor_fingerprint-FilePacketCapture.obj: FilePacketCapture.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT neighbor_fingerprint-FilePacketCapture.obj -MD -MP -MF $(DEPDIR)/neighbor_fingerprint-FilePacketCapture.Tpo -c -o neighbor_fingerprint-FilePacketCapture.obj `if test -f 'FilePacketCapture.cpp'; then $(CYGPATH_W) 'FilePacketCapture.cpp'; else $(CYGPATH_W) '$(srcdir)/FilePacketCapture.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/neighbor_fingerprint-FilePacketCapture.Tpo $(DEPDIR)/neighbor_fingerprint-FilePacketCapture.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='FilePacketCapture.cpp' object='neighbor_fingerprint-FilePacketCapture.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o neighbor_fingerprint-FilePacketCapture.obj `if test -f 'FilePacketCapture.cpp'; then $(CYGPATH_W) 'FilePacketCapture.cpp'; else $(CYGPATH_W) '$(srcdir)/FilePacketCapture.cpp'; fi`
+
+neighbor_fingerprint-InterfacePacketCapture.o: InterfacePacketCapture.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT neighbor_fingerprint-InterfacePacketCapture.o -MD -MP -MF $(DEPDIR)/neighbor_fingerprint-InterfacePacketCapture.Tpo -c -o neighbor_fingerprint-InterfacePacketCapture.o `test -f 'InterfacePacketCapture.cpp' || echo '$(srcdir)/'`InterfacePacketCapture.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/neighbor_fingerprint-InterfacePacketCapture.Tpo $(DEPDIR)/neighbor_fingerprint-InterfacePacketCapture.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='InterfacePacketCapture.cpp' object='neighbor_fingerprint-InterfacePacketCapture.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o neighbor_fingerprint-InterfacePacketCapture.o `test -f 'InterfacePacketCapture.cpp' || echo '$(srcdir)/'`InterfacePacketCapture.cpp
+
+neighbor_fingerprint-InterfacePacketCapture.obj: InterfacePacketCapture.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT neighbor_fingerprint-InterfacePacketCapture.obj -MD -MP -MF $(DEPDIR)/neighbor_fingerprint-InterfacePacketCapture.Tpo -c -o neighbor_fingerprint-InterfacePacketCapture.obj `if test -f 'InterfacePacketCapture.cpp'; then $(CYGPATH_W) 'InterfacePacketCapture.cpp'; else $(CYGPATH_W) '$(srcdir)/InterfacePacketCapture.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/neighbor_fingerprint-InterfacePacketCapture.Tpo $(DEPDIR)/neighbor_fingerprint-InterfacePacketCapture.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='InterfacePacketCapture.cpp' object='neighbor_fingerprint-InterfacePacketCapture.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o neighbor_fingerprint-InterfacePacketCapture.obj `if test -f 'InterfacePacketCapture.cpp'; then $(CYGPATH_W) 'InterfacePacketCapture.cpp'; else $(CYGPATH_W) '$(srcdir)/InterfacePacketCapture.cpp'; fi`
+
+neighbor_fingerprint-PacketCapture.o: PacketCapture.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT neighbor_fingerprint-PacketCapture.o -MD -MP -MF $(DEPDIR)/neighbor_fingerprint-PacketCapture.Tpo -c -o neighbor_fingerprint-PacketCapture.o `test -f 'PacketCapture.cpp' || echo '$(srcdir)/'`PacketCapture.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/neighbor_fingerprint-PacketCapture.Tpo $(DEPDIR)/neighbor_fingerprint-PacketCapture.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='PacketCapture.cpp' object='neighbor_fingerprint-PacketCapture.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o neighbor_fingerprint-PacketCapture.o `test -f 'PacketCapture.cpp' || echo '$(srcdir)/'`PacketCapture.cpp
+
+neighbor_fingerprint-PacketCapture.obj: PacketCapture.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT neighbor_fingerprint-PacketCapture.obj -MD -MP -MF $(DEPDIR)/neighbor_fingerprint-PacketCapture.Tpo -c -o neighbor_fingerprint-PacketCapture.obj `if test -f 'PacketCapture.cpp'; then $(CYGPATH_W) 'PacketCapture.cpp'; else $(CYGPATH_W) '$(srcdir)/PacketCapture.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/neighbor_fingerprint-PacketCapture.Tpo $(DEPDIR)/neighbor_fingerprint-PacketCapture.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='PacketCapture.cpp' object='neighbor_fingerprint-PacketCapture.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o neighbor_fingerprint-PacketCapture.obj `if test -f 'PacketCapture.cpp'; then $(CYGPATH_W) 'PacketCapture.cpp'; else $(CYGPATH_W) '$(srcdir)/PacketCapture.cpp'; fi`
+
+neighbor_fingerprint-Config.o: Config.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT neighbor_fingerprint-Config.o -MD -MP -MF $(DEPDIR)/neighbor_fingerprint-Config.Tpo -c -o neighbor_fingerprint-Config.o `test -f 'Config.cpp' || echo '$(srcdir)/'`Config.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/neighbor_fingerprint-Config.Tpo $(DEPDIR)/neighbor_fingerprint-Config.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='Config.cpp' object='neighbor_fingerprint-Config.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o neighbor_fingerprint-Config.o `test -f 'Config.cpp' || echo '$(srcdir)/'`Config.cpp
+
+neighbor_fingerprint-Config.obj: Config.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT neighbor_fingerprint-Config.obj -MD -MP -MF $(DEPDIR)/neighbor_fingerprint-Config.Tpo -c -o neighbor_fingerprint-Config.obj `if test -f 'Config.cpp'; then $(CYGPATH_W) 'Config.cpp'; else $(CYGPATH_W) '$(srcdir)/Config.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/neighbor_fingerprint-Config.Tpo $(DEPDIR)/neighbor_fingerprint-Config.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='Config.cpp' object='neighbor_fingerprint-Config.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o neighbor_fingerprint-Config.obj `if test -f 'Config.cpp'; then $(CYGPATH_W) 'Config.cpp'; else $(CYGPATH_W) '$(srcdir)/Config.cpp'; fi`
+
+neighbor_fingerprint-Probes.o: Probes.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT neighbor_fingerprint-Probes.o -MD -MP -MF $(DEPDIR)/neighbor_fingerprint-Probes.Tpo -c -o neighbor_fingerprint-Probes.o `test -f 'Probes.cpp' || echo '$(srcdir)/'`Probes.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/neighbor_fingerprint-Probes.Tpo $(DEPDIR)/neighbor_fingerprint-Probes.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='Probes.cpp' object='neighbor_fingerprint-Probes.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o neighbor_fingerprint-Probes.o `test -f 'Probes.cpp' || echo '$(srcdir)/'`Probes.cpp
+
+neighbor_fingerprint-Probes.obj: Probes.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT neighbor_fingerprint-Probes.obj -MD -MP -MF $(DEPDIR)/neighbor_fingerprint-Probes.Tpo -c -o neighbor_fingerprint-Probes.obj `if test -f 'Probes.cpp'; then $(CYGPATH_W) 'Probes.cpp'; else $(CYGPATH_W) '$(srcdir)/Probes.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/neighbor_fingerprint-Probes.Tpo $(DEPDIR)/neighbor_fingerprint-Probes.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='Probes.cpp' object='neighbor_fingerprint-Probes.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o neighbor_fingerprint-Probes.obj `if test -f 'Probes.cpp'; then $(CYGPATH_W) 'Probes.cpp'; else $(CYGPATH_W) '$(srcdir)/Probes.cpp'; fi`
+
+neighbor_fingerprint-helpers.o: helpers.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT neighbor_fingerprint-helpers.o -MD -MP -MF $(DEPDIR)/neighbor_fingerprint-helpers.Tpo -c -o neighbor_fingerprint-helpers.o `test -f 'helpers.cpp' || echo '$(srcdir)/'`helpers.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/neighbor_fingerprint-helpers.Tpo $(DEPDIR)/neighbor_fingerprint-helpers.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='helpers.cpp' object='neighbor_fingerprint-helpers.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o neighbor_fingerprint-helpers.o `test -f 'helpers.cpp' || echo '$(srcdir)/'`helpers.cpp
+
+neighbor_fingerprint-helpers.obj: helpers.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT neighbor_fingerprint-helpers.obj -MD -MP -MF $(DEPDIR)/neighbor_fingerprint-helpers.Tpo -c -o neighbor_fingerprint-helpers.obj `if test -f 'helpers.cpp'; then $(CYGPATH_W) 'helpers.cpp'; else $(CYGPATH_W) '$(srcdir)/helpers.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/neighbor_fingerprint-helpers.Tpo $(DEPDIR)/neighbor_fingerprint-helpers.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='helpers.cpp' object='neighbor_fingerprint-helpers.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o neighbor_fingerprint-helpers.obj `if test -f 'helpers.cpp'; then $(CYGPATH_W) 'helpers.cpp'; else $(CYGPATH_W) '$(srcdir)/helpers.cpp'; fi`
+
+neighbor_fingerprint-ArpFingerprint.o: ArpFingerprint.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT neighbor_fingerprint-ArpFingerprint.o -MD -MP -MF $(DEPDIR)/neighbor_fingerprint-ArpFingerprint.Tpo -c -o neighbor_fingerprint-ArpFingerprint.o `test -f 'ArpFingerprint.cpp' || echo '$(srcdir)/'`ArpFingerprint.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/neighbor_fingerprint-ArpFingerprint.Tpo $(DEPDIR)/neighbor_fingerprint-ArpFingerprint.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='ArpFingerprint.cpp' object='neighbor_fingerprint-ArpFingerprint.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o neighbor_fingerprint-ArpFingerprint.o `test -f 'ArpFingerprint.cpp' || echo '$(srcdir)/'`ArpFingerprint.cpp
+
+neighbor_fingerprint-ArpFingerprint.obj: ArpFingerprint.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT neighbor_fingerprint-ArpFingerprint.obj -MD -MP -MF $(DEPDIR)/neighbor_fingerprint-ArpFingerprint.Tpo -c -o neighbor_fingerprint-ArpFingerprint.obj `if test -f 'ArpFingerprint.cpp'; then $(CYGPATH_W) 'ArpFingerprint.cpp'; else $(CYGPATH_W) '$(srcdir)/ArpFingerprint.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/neighbor_fingerprint-ArpFingerprint.Tpo $(DEPDIR)/neighbor_fingerprint-ArpFingerprint.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='ArpFingerprint.cpp' object='neighbor_fingerprint-ArpFingerprint.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o neighbor_fingerprint-ArpFingerprint.obj `if test -f 'ArpFingerprint.cpp'; then $(CYGPATH_W) 'ArpFingerprint.cpp'; else $(CYGPATH_W) '$(srcdir)/ArpFingerprint.cpp'; fi`
+
+neighbor_fingerprint-Fingerprinter.o: Fingerprinter.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT neighbor_fingerprint-Fingerprinter.o -MD -MP -MF $(DEPDIR)/neighbor_fingerprint-Fingerprinter.Tpo -c -o neighbor_fingerprint-Fingerprinter.o `test -f 'Fingerprinter.cpp' || echo '$(srcdir)/'`Fingerprinter.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/neighbor_fingerprint-Fingerprinter.Tpo $(DEPDIR)/neighbor_fingerprint-Fingerprinter.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='Fingerprinter.cpp' object='neighbor_fingerprint-Fingerprinter.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o neighbor_fingerprint-Fingerprinter.o `test -f 'Fingerprinter.cpp' || echo '$(srcdir)/'`Fingerprinter.cpp
+
+neighbor_fingerprint-Fingerprinter.obj: Fingerprinter.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT neighbor_fingerprint-Fingerprinter.obj -MD -MP -MF $(DEPDIR)/neighbor_fingerprint-Fingerprinter.Tpo -c -o neighbor_fingerprint-Fingerprinter.obj `if test -f 'Fingerprinter.cpp'; then $(CYGPATH_W) 'Fingerprinter.cpp'; else $(CYGPATH_W) '$(srcdir)/Fingerprinter.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/neighbor_fingerprint-Fingerprinter.Tpo $(DEPDIR)/neighbor_fingerprint-Fingerprinter.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='Fingerprinter.cpp' object='neighbor_fingerprint-Fingerprinter.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o neighbor_fingerprint-Fingerprinter.obj `if test -f 'Fingerprinter.cpp'; then $(CYGPATH_W) 'Fingerprinter.cpp'; else $(CYGPATH_W) '$(srcdir)/Fingerprinter.cpp'; fi`
+
+neighbor_fingerprint-main.o: main.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT neighbor_fingerprint-main.o -MD -MP -MF $(DEPDIR)/neighbor_fingerprint-main.Tpo -c -o neighbor_fingerprint-main.o `test -f 'main.cpp' || echo '$(srcdir)/'`main.cpp
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/neighbor_fingerprint-main.Tpo $(DEPDIR)/neighbor_fingerprint-main.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='main.cpp' object='neighbor_fingerprint-main.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o neighbor_fingerprint-main.o `test -f 'main.cpp' || echo '$(srcdir)/'`main.cpp
+
+neighbor_fingerprint-main.obj: main.cpp
+@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT neighbor_fingerprint-main.obj -MD -MP -MF $(DEPDIR)/neighbor_fingerprint-main.Tpo -c -o neighbor_fingerprint-main.obj `if test -f 'main.cpp'; then $(CYGPATH_W) 'main.cpp'; else $(CYGPATH_W) '$(srcdir)/main.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(am__mv) $(DEPDIR)/neighbor_fingerprint-main.Tpo $(DEPDIR)/neighbor_fingerprint-main.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='main.cpp' object='neighbor_fingerprint-main.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(neighbor_fingerprint_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o neighbor_fingerprint-main.obj `if test -f 'main.cpp'; then $(CYGPATH_W) 'main.cpp'; else $(CYGPATH_W) '$(srcdir)/main.cpp'; fi`
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
