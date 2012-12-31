@@ -27,7 +27,18 @@ m4_include([m4/ax_boost_base.m4])
 m4_include([m4/ax_boost_program_options.m4])
 
 AX_BOOST_BASE(1.42)
+if test "$succeeded" != "yes" ; then
+  echo "Error: You need to install the boost library version 1.42 or newer!"
+  exit
+fi
+
 AX_BOOST_PROGRAM_OPTIONS
+if test "x$ax_cv_boost_program_options" = "xno"; then
+  echo
+  echo "Error: You need to install the boost program options library!"
+  echo
+  exit
+fi
 
 
 # Checks for header files.

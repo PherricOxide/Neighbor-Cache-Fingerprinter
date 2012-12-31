@@ -4203,6 +4203,11 @@ $as_echo "#define HAVE_BOOST /**/" >>confdefs.h
 fi
 
 
+if test "$succeeded" != "yes" ; then
+  echo "Error: You need to install the boost library version 1.42 or newer!"
+  exit
+fi
+
 
 
 # Check whether --with-boost-program-options was given.
@@ -4428,6 +4433,12 @@ fi
 	LDFLAGS="$LDFLAGS_SAVED"
 	fi
 
+if test "x$ax_cv_boost_program_options" = "xno"; then
+  echo
+  echo "Error: You need to install the boost program options library!"
+  echo
+  exit
+fi
 
 
 # Checks for header files.
