@@ -166,6 +166,7 @@ build_alias = @build_alias@
 builddir = @builddir@
 datadir = @datadir@
 datarootdir = @datarootdir@
+dnetconfig = @dnetconfig@
 docdir = @docdir@
 dvidir = @dvidir@
 exec_prefix = @exec_prefix@
