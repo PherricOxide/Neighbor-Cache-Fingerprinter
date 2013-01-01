@@ -622,7 +622,7 @@ int main(int argc, char ** argv)
 	addr_pack_eth(&zeroMAC, &zeroMacNumber[0]);
 
 	stringstream pcapFilterString;
-	pcapFilterString << "arp or (dst net " << CI->m_srcipString << ")";
+	//pcapFilterString << "arp or (dst net " << CI->m_srcipString << ")";
 
 	pthread_mutex_init(&cbLock, NULL);
 
