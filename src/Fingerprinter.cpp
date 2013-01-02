@@ -37,11 +37,16 @@ void Fingerprinter::LoadFingerprints() {
 	if (fingerprintFile.is_open()) {
 		while ( fingerprintFile.good() ) {
 			getline (fingerprintFile,line);
+			// Skip past comment lines
+			if (line.size() > 0 && line.at(0) == '#')
+				continue;
+
+			// Skip past empty lines
+			if (line == "" || line == " ")
+				continue;
+
 			lineNumber++;
 
-			if (line == "" || line == " ") {
-				continue;
-			}
 
 			if (lineNumber % 2 != 0) {
 				fingerprintName = line;
