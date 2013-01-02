@@ -105,10 +105,9 @@ void Config::LoadArgs(char ** &argv, int &argc) {
 			)
 
 			("fingerprints",
-					po::value<string>(&m_fingerprintFile)->default_value("fingerprints.txt"),
+					po::value<string>(&m_fingerprintFile)->default_value("/usr/local/share/ncf/ncf-fingerprints"),
 					"Path to the fingerprints file"
 			)
-
 		;
 
 		po::variables_map vm;
