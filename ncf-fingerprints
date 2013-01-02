@@ -55,3 +55,6 @@ Wind River VxWorks
 # This had the odd behavior of replying with a different MAC in the ethernet frame from what reported it's ARP REPLY
 3com NBX V3000 (IP Telephone System)
 0 3 39927 49987 0 33 0 0 0 0 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 
+
+Honeyd Honeypot
+0 2 500205 500205 1 60 1 0 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
