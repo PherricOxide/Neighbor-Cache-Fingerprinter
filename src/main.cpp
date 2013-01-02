@@ -32,11 +32,20 @@
 using namespace std;
 using namespace Nova;
 
-
+// This is a lock to pause the Callback thread,
+// should be locked whenever the 'response' var is accessed.
 pthread_mutex_t cbLock;
+
+// This acts a data exchange point between the main and packet callback threads
 ResponseBehavior response;
+
+// The fingerprint of the host we're targeting. Filled in incrementally by each check.
 ArpFingerprint fingerprint;
+
+// This makes the callback thread ignore packets from before our probe packet
 bool seenProbe = false;
+
+// Should we reply to ARP requests for our current face MAC address?
 bool replyToArp = false;
 
 addr broadcastMAC, broadcastIP, zeroIP, zeroMAC, origSrcMac;
@@ -45,6 +54,7 @@ Prober prober;
 
 timeval lastARPReply; /* Used to compute the time between ARP requests */
 
+// Just used for pretty printing of things
 string horizontalLine = "======================================================================";
 
 // TODO: Do this a better way (don't loop at 255, don't use addr internals)
@@ -52,9 +62,6 @@ void incrementSourceMac() {
 	CI->m_srcmac.__addr_u.__eth.data[5]++;
 }
 
-// TODO: The response variable is how we get info back from the callback.
-// This is a hacky way to do it left over from the initial prototype,
-// the entire callback function really needs refactoring at some point.
 void ResetResponse(bool setSeenProbe) {
 	pthread_mutex_lock(&cbLock);
 	seenProbe = setSeenProbe;
@@ -75,7 +82,7 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 	addr_pack_eth(&srcMac, (uint8_t*)&eth->eth_src);
 
 	if (ntohs(eth->eth_type) == ETH_TYPE_ARP) {
-		/* We ignore everything before our probe has been sent */
+		/* We ignore everything ARP before our probe has been sent */
 		if (!seenProbe)
 			return;
 
@@ -171,7 +178,6 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 				return;
 			}
 		} else {
-
 			if (prober.isThisProbeReply(pkthdr, packet)) {
 				addr dstIp, srcIp;
 				addr_pack_ip(&dstIp, (uint8_t*)&ip->ip_dst);
@@ -206,6 +212,8 @@ void ConfigureDestinationMAC() {
 		// Don't drop packets because we're not doing a probe here
 		ResetResponse(true);
 
+		// The first time we try to do an ARP request without revealing our source IP address,
+		// but some devices (such as Android) won't respond to this.
 		prober.SendARPReply(&CI->m_srcmac, &broadcastMAC, &zeroIP, &CI->m_dstip, ARP_OP_REQUEST, &zeroMAC);
 		sleep(2);
 
@@ -287,6 +295,12 @@ void checkInitialQueryBehavior()
 
 		pthread_mutex_lock(&cbLock);
 		cout << response.toString() << endl;
+
+		if (!response.sawArpReply && !response.sawProbeReply) {
+			cout << "ERROR: Did not see Probe Response or ARP Request from target host!" << endl;
+			cout << "The test will continue, but the host may be down or not responding to our Probes. You might want to try a different --probetype value." << endl;
+			cout << endl;
+		}
 
 
 		if (response.requestAttempts > fingerprint.requestAttemptsMax) {
@@ -393,6 +407,9 @@ void checkStaleTiming() {
 		if (response.requestAttempts > 0 && i != 0) {
 			break;
 		}
+
+		if (!response.sawProbeReply)
+			cout << "WARNING: Did not see a Probe reply from the target host!" << endl;
 		pthread_mutex_unlock(&cbLock);
 	}
 
@@ -513,23 +530,25 @@ void checkForFloodProtection() {
 	sleep(2);
 
 	pthread_mutex_lock(&cbLock);
-	cout << "Reply was to " << addr_ntoa(&response.dstMac) << endl;
-	cout << "count was " << response.dstMac.__addr_u.__eth.data[5] - start << endl;
+	if (response.sawProbeReply) {
+		cout << "Reply was to " << addr_ntoa(&response.dstMac) << endl;
+		cout << "count was " << response.dstMac.__addr_u.__eth.data[5] - start << endl;
 
-	if (response.dstMac.__addr_u.__eth.data[5] - start == 0) {
-		cout << "ERROR: None of the replies were accepted into the cache! Can not determine result for this test." << endl;
-		fingerprint.hasFloodProtection = false;
-	} else if (response.dstMac.__addr_u.__eth.data[5] - start == 1) {
-		fingerprint.hasFloodProtection = true;
-		cout << "ARP flood protection was detected" << endl;
+		if (response.dstMac.__addr_u.__eth.data[5] - start == 0) {
+			cout << "ERROR: None of the replies were accepted into the cache! Can not determine result for this test." << endl;
+			fingerprint.hasFloodProtection = false;
+		} else if (response.dstMac.__addr_u.__eth.data[5] - start == 1) {
+			fingerprint.hasFloodProtection = true;
+			cout << "ARP flood protection was detected" << endl;
+		} else {
+			cout << "No ARP flood protection detected" << endl;
+			fingerprint.hasFloodProtection = false;
+		}
 	} else {
-		cout << "No ARP flood protection detected" << endl;
-		fingerprint.hasFloodProtection = false;
+		cout << "ERROR: Did not see Probe Reply! Unable to get valid test result." << endl;
 	}
-
 	pthread_mutex_unlock(&cbLock);
 }
-
 
 
 /*

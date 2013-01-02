@@ -1,3 +1,8 @@
+# This fingerprint matches the default constructor values of our fingerprint, useful when we want
+# to force scans to keep going even when the target host isn't giving any replies.
+Offline Host
+0 0 -1 0 1 60 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+
 Windows 7
 3 3 950784 1000752 1 50 1 1 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 1 1 1 1 1 1 0 0 0 1 1 1 1 1 1 
 
