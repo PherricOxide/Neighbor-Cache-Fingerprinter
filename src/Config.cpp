@@ -31,9 +31,9 @@ Config::Config() {};
 Config* Config::Inst() {
 	if (Config::m_config == NULL) {
 		Config::m_config = new Config();
-	} else {
-		return Config::m_config;
 	}
+
+	return Config::m_config;
 }
 
 void Config::LoadArgs(char ** &argv, int &argc) {
@@ -108,6 +108,11 @@ void Config::LoadArgs(char ** &argv, int &argc) {
 					po::value<string>(&m_fingerprintFile)->default_value("/usr/local/share/ncf/ncf-fingerprints"),
 					"Path to the fingerprints file"
 			)
+
+			("probetype",
+					po::value<string>(&m_probeType)->default_value("TCP"),
+					"Type of probe to illicit host reply. Must be one of.\nTCP: TCP SYN Probe\nICMP: Echo Probe"
+			)
 		;
 
 		po::variables_map vm;
@@ -138,6 +143,7 @@ void Config::LoadArgs(char ** &argv, int &argc) {
 			srcMac[5] = (uint8_t)d5;
 			
 			addr_pack(&m_srcmac, ADDR_TYPE_ETH, ETH_ADDR_BITS, srcMac, ETH_ADDR_LEN);
+			addr_pack(&m_inputSrcMac, ADDR_TYPE_ETH, ETH_ADDR_BITS, srcMac, ETH_ADDR_LEN);
 		}
 	
 		if (vm.count("dstmac")) {

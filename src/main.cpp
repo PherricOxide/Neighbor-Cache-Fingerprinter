@@ -164,24 +164,19 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 
 		/* Check if our own probe packet went over the interface */
 		if (!seenProbe) {
-			Lock lock(&prober.probeBufferLock);
-			if (pkthdr->len != prober.probeBufferSize)
+			if (prober.isThisLastProbePacket(pkthdr, packet)) {
+				seenProbe = true;
 				return;
-
-			for (int i = 0; i < pkthdr->len; i++) {
-				if (packet[i] != prober.probeBuffer[i])
-					return;
+			} else {
+				return;
 			}
-
-			seenProbe = true;
-			//cout << "Packet capture thread has seen probe packet go out" << endl;
 		} else {
-			addr dstIp, srcIp;
-			addr_pack_ip(&dstIp, (uint8_t*)&ip->ip_dst);
-			addr_pack_ip(&srcIp, (uint8_t*)&ip->ip_src);
 
+			if (prober.isThisProbeReply(pkthdr, packet)) {
+				addr dstIp, srcIp;
+				addr_pack_ip(&dstIp, (uint8_t*)&ip->ip_dst);
+				addr_pack_ip(&srcIp, (uint8_t*)&ip->ip_src);
 
-			if (addr_cmp(&dstIp, &CI->m_srcip) == 0) {
 				response.dstMac = dstMac;
 				response.srcMac = srcMac;
 				if (addr_cmp(&dstMac, &CI->m_srcmac) == 0) {
@@ -192,12 +187,12 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 
 				cout << "<< Saw a probe response to " << addr_ntoa(&dstIp) << " / " << addr_ntoa(&dstMac) << " from " << addr_ntoa(&srcIp) << " / " << addr_ntoa(&srcMac) << endl;
 				response.sawProbeReply = true;
-				if (response.requestAttempts == 0)
+				if (response.requestAttempts == 0) {
 					response.replyBeforeARP = true;
-				else
+				} else {
 					response.replyBeforeARP = false;
+				}
 			}
-
 		}
 	}
 }
@@ -256,7 +251,7 @@ void ConfigureDestinationMAC() {
 bool gratuitousResultCheck() {
 	bool result;
 
-	prober.SendSYN(CI->m_dstip, CI->m_dstmac, CI->m_srcip, origSrcMac, CI->m_dstport, CI->m_srcport);
+	prober.Probe();
 	usleep(1000000);
 
 	pthread_mutex_lock(&cbLock);
@@ -598,6 +593,8 @@ void checkIsIpUsedResponse() {
 int main(int argc, char ** argv)
 {
 	Config::Inst()->LoadArgs(argv, argc);
+
+	prober.SetProbeType(CI->m_probeType);
 
 	// Load the fingerprints
 	Fingerprinter fingerprinter;

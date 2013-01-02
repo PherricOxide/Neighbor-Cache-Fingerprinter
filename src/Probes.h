@@ -17,22 +17,47 @@
 
 #include <dnet.h>
 #include <pthread.h>
+#include <pcap.h>
+#include <string>
+
+enum ProbeType {
+	PROBE_TYPE_TCP,
+	PROBE_TYPE_ICMP
+};
 
 class Prober {
 public:
 	/* Buffer for our probe packets */
+private:
 	static const int probeBufferSize = ETH_HDR_LEN + IP_HDR_LEN + TCP_HDR_LEN;
+	uint lastProbeSize;
 	unsigned char probeBuffer[probeBufferSize];
 	pthread_mutex_t probeBufferLock;
 
-	Prober();
-	void Probe();
-
-	void SendARPReply(struct addr *srcMAC, struct addr *dstMAC, struct addr *srcIP, struct addr *dstIP, int opcode = ARP_OP_REPLY, struct addr *tha = NULL);
-
-	void SendSYN(
+	int SendTCPProbe(
 			addr dstIP, addr dstMAC,
 			addr srcIP, addr srcMAC,
 			int dstPort, int srcPort);
 
+	int SendICMPProbe(addr dstIP, addr dstMAC,addr srcIP, addr srcMAC);
+
+
+public:
+
+	Prober();
+	void SetProbeType(std::string type);
+
+	void Probe();
+
+	void SendARPReply(struct addr *srcMAC, struct addr *dstMAC, struct addr *srcIP, struct addr *dstIP, int opcode = ARP_OP_REPLY, struct addr *tha = NULL);
+
+
+	bool isThisLastProbePacket(const struct pcap_pkthdr *pkthdr, const unsigned char *packet);
+	bool isThisProbeReply(const struct pcap_pkthdr *pkthdr, const unsigned char *packet);
+
+
+	ProbeType probeType;
+	uint16_t lastICMPSequenceNumber;
+	uint16_t lastICMPIdNumber;
+	uint32_t lastTCPSequenceNumber;
 };

@@ -35,10 +35,12 @@ public:
 	std::string m_srcipString, m_dstipString;
 	std::string m_fingerprintFile;
 	addr m_srcip, m_dstip;
-	addr m_srcmac, m_dstmac;
+	addr m_srcmac, m_inputSrcMac, m_dstmac;
 	int m_srcport, m_dstport;
 	int m_sleeptime;
 	int m_retries;
+	std::string m_probeType;
+
 private:
 	Config();
 

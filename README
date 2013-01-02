@@ -39,12 +39,13 @@ system network stack implementations that can be used for unique identification.
 	Traditional operating system fingerprinting tools such as Nmap and
 xprobe2 rely on creating fingerprints from higher level protocols such as TCP,
 UDP, and ICMP. The downside of these tools is that they usually require open TCP
-ports and responses to ICMP probes. This tool works by sending a TCP SYN packet
-to a port which can be either open or closed. The target machine will either
-respond with a SYN/ACK packet or a SYN/RST packet, but either way it must first
-discover the MAC address to send the reply to via queries to the ARP Neighbor
-Cache. This allows for fingerprinting on target machines that have nothing but
-closed TCP ports and give no ICMP responses.
+ports and responses to ICMP probes. The neighbor-fingerprint tool works by
+sending a "Probe Packet", which is either a TCP SYN packet to a port that can be
+open OR closed, OR sending an ICMP Echo request to ellicit a reply. The target
+machine will either respond with a SYN/ACK, RST/ACK, or ICMP packet, but in any
+case it must first discover the MAC address to send the reply to via queries to
+the ARP Neighbor Cache. This allows for fingerprinting on target machines that
+have nothing but closed TCP ports and give no ICMP responses.
 
 	The main disadvantage of this tool versus traditional fingerprinting is
 that because it's based on a Layer 2 protocol instead of a Layer 3 protocol, the
@@ -104,16 +105,16 @@ request multiple times in case the request or reply was lost. A simple count
 of the number of requests that are sent can provide a fingerprint feature. In
 addition, there can be differences in the number of responses to open and closed
 ports due to multiple retries on the higher level protocols, and attempting to
-send a probe multiple times can result in different numbers of ARP requests
+send a Probe multiple times can result in different numbers of ARP requests
 (Android will initially send 2 ARP requests, but the second time it will only
 send 1).
 
 For example, 
 
         Windows XP:  Sends 1 request
-	Windows 7:   Sends 3 if probe to closed port (9 if probe to open port)
+	Windows 7:   Sends 3 if Probe to closed port (9 if Probe to open port)
 	Linux:       Sends 3 requests
-	Android 3:  Sends 2 requests the first probe, then 1 request after
+	Android 3:  Sends 2 requests the first Probe, then 1 request after
 
 A minimum and maximum number of requests seen is recorded in the fingerprint.
 
@@ -141,8 +142,8 @@ communication will continue without additional ARP requests. At some point, the
 operating system will decide the entry in the cache is stale and make an attempt
 to update it by sending a new ARP request. 
 
-	To test this a SYN packet is sent, an ARP exchange happens, and then SYN
-packets are sent once per second until another ARP request is seen. 
+	To test this a Probe Packet is sent, an ARP exchange happens, and then Probe
+Packets are sent once per second until another ARP request is seen. 
 
 Operating system response examples, 
 
@@ -208,19 +209,19 @@ address, and in some operating systems also update the timeouts.
 
 Send ARP packet that is known to update most caches with srcmac = srcMacArg
 Send gratuitous ARP packet that is currently being tested with srcmac = srcMacArg + 1
-Send probe packet with a source MAC address of srcMacArg in the Ethernet frame
+Send Probe Packet with a source MAC address of srcMacArg in the Ethernet frame
 
 	The first packet attempts to get the cache entry into a known state: up
 to date and storing the source MAC address that is our default or the command
 line argument --srcmac. The following ARP packet is the actual probe
 permutation that's being tested.
 
-	If the reply to the probe packet is to (srcMacArg + 1), then we know the
+	If the reply to the Probe Packet is to (srcMacArg + 1), then we know the
 gratuitous packet successfully updated the cache entry. If the reply to the
-probe is just (srcMacArg), then we know the cache was not updated and still
+Probe is just (srcMacArg), then we know the cache was not updated and still
 contains the old value.
 
-	The reason the Ethernet frame source MAC address in the probe is set to
+	The reason the Ethernet frame source MAC address in the Probe is set to
 the original srcMacArg is to ensure the target isn't just replying to the MAC
 address it sees packets from and is really pulling the entry out of ARP.
 
@@ -239,7 +240,7 @@ entry to the cache given a gratuitous ARP packet, but they will update existing
 entries. One of the few differences between Windows XP and FreeBSD's fingerprint
 is that we can place an entry in the cache by sending a certain gratuitous
 packet to a FreeBSD machine, and test if it was in the cache by seeing if a
-probe gets a response or not.
+Probe gets a response or not.
 
 ==============================================================================
 Fingerprint Technique: ARP Flood Prevention (Ignored rapid ARP replies)
@@ -254,7 +255,7 @@ RFC1122 (Requirements for Internet Hosts) states,
 	Linux will not only ignore duplicate REQUEST packets within a certain
 time, but also duplicate REPLY packets. We can test this by sending a set of
 unsolicited ARP replies within a short time range with different MAC addresses
-being reported by each reply. Sending a probe will reveal in the probe response
+being reported by each reply. Sending a Probe will reveal in the Probe response
 destination MAC address if the host responds to the first MAC address we ARPed
 or the last, indicating if it ignored the later rapid replies.
 
