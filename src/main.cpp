@@ -81,10 +81,14 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 	addr_pack_eth(&dstMac, (uint8_t*)&eth->eth_dst);
 	addr_pack_eth(&srcMac, (uint8_t*)&eth->eth_src);
 
+	//cout << "Got packet to " << addr_ntoa(&dstMac) << " from " << addr_ntoa(&srcMac)<< endl;
+
 	if (ntohs(eth->eth_type) == ETH_TYPE_ARP) {
 		/* We ignore everything ARP before our probe has been sent */
-		if (!seenProbe)
+		if (!seenProbe){
+			//cout << "Dropped because we didn't see probe yet" << endl;
 			return;
+		}
 
 		if (pkthdr->len < ETH_HDR_LEN + ARP_HDR_LEN)
 			return;
@@ -99,7 +103,10 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 			addr_pack_ip(&addr, arpRequest->ar_tpa);
 
 
-			if (addr_cmp(&addr, &CI->m_srcip) == 0) {
+			if (addr_cmp(&addr, &CI->m_srcip) != 0) {
+				//cout << "ARP request wasn't for us, was for " << addr_ntoa(&addr) << " instead of " << addr_ntoa(&CI->m_srcip) << endl;
+				return;
+			}
 				cout << "<< Got an ARP request to " << addr_ntoa(&dstMac) << " for IP " << addr_ntoa(&addr) << " from " << addr_ntoa(&srcMac) << endl;
 
 				if (addr_cmp(&dstMac, &CI->m_srcmac) == 0) {
@@ -136,7 +143,6 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 					}
 				}
 				lastARPReply = pkthdr->ts;
-			}
 		} else if (ntohs(arp->ar_op) == ARP_OP_REPLY) {
 			if (pkthdr->len < ETH_HDR_LEN + ARP_HDR_LEN + ARP_ETHIP_LEN)
 				return;
@@ -146,8 +152,10 @@ void packetCallback(unsigned char *index, const struct pcap_pkthdr *pkthdr, cons
 			addr_pack_ip(&addr, arpRequest->ar_tpa);
 
 			// Drop it if not to broadcast or our current srcmac
-			if (addr_cmp(&broadcastMAC, &dstMac) != 0 && addr_cmp(&CI->m_srcmac, &dstMac) != 0)
+			if (addr_cmp(&broadcastMAC, &dstMac) != 0 && addr_cmp(&CI->m_srcmac, &dstMac) != 0) {
+				//cout << "Dropped packet because invalid dstmac of " << addr_ntoa(&dstMac) << endl;
 				return;
+			}
 
 			addr_pack_ip(&response.tpa, arpRequest->ar_tpa);
 			addr_pack_eth(&response.tha, arpRequest->ar_tha);
@@ -260,7 +268,7 @@ bool gratuitousResultCheck() {
 	bool result;
 
 	prober.Probe();
-	usleep(1000000);
+	usleep(CI->m_probeTimeout);
 
 	pthread_mutex_lock(&cbLock);
 	if (!response.sawProbeReply) {
@@ -296,7 +304,7 @@ void checkInitialQueryBehavior()
 		pthread_mutex_lock(&cbLock);
 		cout << response.toString() << endl;
 
-		if (!response.sawArpReply && !response.sawProbeReply) {
+		if (!response.sawArpReply && (response.requestAttempts == 0)) {
 			cout << "ERROR: Did not see Probe Response or ARP Request from target host!" << endl;
 			cout << "The test will continue, but the host may be down or not responding to our Probes. You might want to try a different --probetype value." << endl;
 			cout << endl;
@@ -326,7 +334,6 @@ void checkInitialQueryBehavior()
 	// Populate our results into the fingerprint
 	double difference = response.m_maxTimebetweenRequests - response.m_minTimeBetweenRequests;
 	double percentDifference = 100*difference/response.m_minTimeBetweenRequests;
-	cout << "Timing range difference of " << percentDifference << endl;
 
 	if (percentDifference > 8) {
 		fingerprint.constantRetryTime = false;
@@ -364,7 +371,7 @@ void checkInitialUnsolictedReply() {
 	prober.SendARPReply(&CI->m_srcmac, &CI->m_dstmac, &CI->m_srcip, &CI->m_dstip);
 	sleep(1);
 	prober.Probe();
-	sleep(1);
+	usleep(CI->m_probeTimeout);
 
 	pthread_mutex_lock(&cbLock);
 	cout << response.toString() << endl;
@@ -400,7 +407,6 @@ void checkStaleTiming() {
 		pthread_mutex_unlock(&cbLock);
 
 		prober.Probe();
-
 		sleep(1);
 
 		pthread_mutex_lock(&cbLock);
@@ -434,8 +440,7 @@ void checkGratuitousBehavior() {
 
 	// Get ourselves into the ARP cache
 	prober.Probe();
-
-	sleep(5);
+	usleep(1500000);
 
 	pthread_mutex_lock(&cbLock);
 	response = ResponseBehavior();
@@ -473,7 +478,6 @@ void checkGratuitousBehavior() {
 						thaAddress = CI->m_dstmac;
 					}
 
-
 					// Ethernet frame destination MAC
 					addr destinationMac;
 					if (macDestination == 0) {
@@ -483,7 +487,7 @@ void checkGratuitousBehavior() {
 					}
 
 					prober.SendARPReply(&CI->m_srcmac, &destinationMac, &CI->m_srcip, &tpaAddress, arpOpCode, &thaAddress);
-					usleep(1000000);
+					usleep(500000);
 
 					bool testResult = gratuitousResultCheck();
 					result << testResult;
@@ -497,7 +501,7 @@ void checkGratuitousBehavior() {
 					probeTestNumber++;
 
 					prober.SendARPReply(&origSrcMac, &CI->m_dstmac, &CI->m_srcip, &CI->m_dstip);
-					sleep(3);
+					usleep(1500000);
 					ResetResponse(false);
 				}
 			}
@@ -527,7 +531,7 @@ void checkForFloodProtection() {
 	ResetResponse(false);
 
 	prober.Probe();
-	sleep(2);
+	usleep(CI->m_probeTimeout);
 
 	pthread_mutex_lock(&cbLock);
 	if (response.sawProbeReply) {
@@ -648,7 +652,7 @@ int main(int argc, char ** argv)
 	capture->SetFilter(pcapFilterString.str());
 	capture->SetPacketCb(&packetCallback);
 	capture->StartCapture();
-	sleep(1);
+	sleep(2);
 
 	// Get the MAC of our target
 	ConfigureDestinationMAC();
@@ -779,8 +783,8 @@ int main(int argc, char ** argv)
 			ResetResponse(false);
 
 			prober.Probe();
+			usleep(CI->m_probeTimeout);
 
-			sleep(2);
 			pthread_mutex_lock(&cbLock);
 			if (response.sawProbeReply) {
 				cout << "Reply was to " << addr_ntoa(&response.dstMac) << endl;

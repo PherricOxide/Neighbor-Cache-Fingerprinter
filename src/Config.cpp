@@ -26,7 +26,9 @@ using namespace std;
 
 Config *Config::m_config = NULL;
 
-Config::Config() {};
+Config::Config() {
+	pthread_mutex_init(&configLock, NULL);
+};
 
 Config* Config::Inst() {
 	if (Config::m_config == NULL) {
@@ -107,6 +109,11 @@ void Config::LoadArgs(char ** &argv, int &argc) {
 			("fingerprints",
 					po::value<string>(&m_fingerprintFile)->default_value("/usr/local/share/ncf/ncf-fingerprints"),
 					"Path to the fingerprints file"
+			)
+
+			("probetimeout",
+					po::value<int>(&m_probeTimeout)->default_value(1000000),
+					"Timeout (in microseconds) before giving up on probe replies."
 			)
 
 			("probetype",

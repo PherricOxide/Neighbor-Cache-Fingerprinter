@@ -18,6 +18,9 @@
 #include <boost/program_options.hpp>
 #include <string>
 #include <dnet.h>
+#include <pthread.h>
+
+#include "Lock.h"
 
 #define CI Config::Inst()
 namespace po = boost::program_options;
@@ -27,6 +30,7 @@ public:
 	static Config* Inst();
 	void LoadArgs(char** &argv, int &argc);
 
+	pthread_mutex_t configLock;
 
 	std::string m_interface;
 
@@ -39,6 +43,7 @@ public:
 	int m_srcport, m_dstport;
 	int m_sleeptime;
 	int m_retries;
+	int m_probeTimeout;
 	std::string m_probeType;
 
 private:

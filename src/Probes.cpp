@@ -21,10 +21,12 @@
 #include "helpers.h"
 
 #include <iostream>
-
+#include <pthread.h>
 
 using namespace std;
 using namespace Nova;
+
+extern pthread_mutex_t cbLock;
 
 Prober::Prober() {
 	pthread_mutex_init(&probeBufferLock, NULL);
@@ -45,12 +47,14 @@ void Prober::SetProbeType(string type) {
 }
 
 void Prober::Probe() {
+	pthread_mutex_lock(&cbLock);
 	// TODO: Support multiple types of probes
 	if (probeType == PROBE_TYPE_TCP) {
 		lastProbeSize = SendTCPProbe(CI->m_dstip, CI->m_dstmac, CI->m_srcip, CI->m_inputSrcMac, CI->m_dstport, CI->m_srcport);
 	} else if (probeType == PROBE_TYPE_ICMP) {
 		lastProbeSize = SendICMPProbe(CI->m_dstip, CI->m_dstmac, CI->m_srcip, CI->m_inputSrcMac);
 	}
+	pthread_mutex_unlock(&cbLock);
 }
 
 int Prober::SendTCPProbe(
@@ -68,7 +72,7 @@ int Prober::SendTCPProbe(
 
 	eth_t *eth = eth_open(CI->m_interface.c_str());
 	if (eth == NULL) {
-		cout << "Unable to open ethernet interface to send TCP SYN" << endl;
+		cout << "Unable to open ethernet interface to send probe" << endl;
 		return 0;
 	}
 
@@ -93,7 +97,7 @@ int Prober::SendICMPProbe(addr dstIP, addr dstMAC,addr srcIP, addr srcMAC) {
 
 	eth_t *eth = eth_open(CI->m_interface.c_str());
 	if (eth == NULL) {
-		cout << "Unable to open ethernet interface to send TCP SYN" << endl;
+		cout << "Unable to open ethernet interface to send probe" << endl;
 		return 0;
 	}
 
@@ -118,12 +122,17 @@ bool Prober::isThisProbeReply(const struct pcap_pkthdr *pkthdr, const unsigned c
 	ipByteLength = ipByteLength*4;
 
 	// Is it from our target?
-	if (addr_cmp(&srcIp, &CI->m_dstip) != 0)
+	if (addr_cmp(&srcIp, &CI->m_dstip) != 0) {
+		//cout << "Not reply because not from our target" << endl;
 		return false;
+	}
 
 	// Is it a reply to our IP?
 	if (addr_cmp(&dstIp, &CI->m_srcip) != 0)
+	{
+		//cout << "Not reply because not to us" << endl;
 		return false;
+	}
 
 	if (probeType == PROBE_TYPE_TCP) {
 		if (ip->ip_p != IP_PROTO_TCP)
@@ -168,12 +177,16 @@ bool Prober::isThisProbeReply(const struct pcap_pkthdr *pkthdr, const unsigned c
 
 bool Prober::isThisLastProbePacket(const struct pcap_pkthdr *pkthdr, const unsigned char *packet) {
 	Lock(&this->probeBufferLock);
-	if (pkthdr->len != lastProbeSize)
+	if (pkthdr->len != lastProbeSize) {
+		//cout << "Dropping because len " << pkthdr->len << " != " << lastProbeSize << endl;
 		return false;
+	}
 
 	for (uint i = 0; i < pkthdr->len; i++) {
 		if (packet[i] != probeBuffer[i])
+		{
 			return false;
+		}
 	}
 
 	return true;
