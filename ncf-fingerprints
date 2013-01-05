@@ -27,8 +27,11 @@ Linux 2.6 (older than 2.6.24) (fingerprint from Knoppix 5)
 Linux 2.4 (fingerprint from Damn Small Linux 4.4.10)
 3 3 995179 1001901 1 60 1 0 1 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
 
-FreeBSD 9.0-RELEASE
+FreeBSD (tested on 7.4 and 9.0)
 1 1 -1 0 1 60 1 0 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+
+NetBSD (fingerprint from NetBSD 6.0.1)
+1 1 -1 0 1 60 1 0 1 0 1 0 0 0 1 1 1 1 1 1 0 0 0 1 1 1 1 1 1 0 0 0 1 1 1 1 1 1 0 0 0 1 1 1 1 1 1 
 
 Android 4.0.4
 0 2 1011707 6000952 0 19 1 1 1 1 0 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 
