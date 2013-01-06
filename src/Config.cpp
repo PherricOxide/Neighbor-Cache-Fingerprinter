@@ -118,7 +118,7 @@ void Config::LoadArgs(char ** &argv, int &argc) {
 
 			("probetype",
 					po::value<string>(&m_probeType)->default_value("TCP"),
-					"Type of probe to illicit host reply. Must be one of.\nTCP: TCP SYN Probe\nICMP: Echo Probe"
+					"Type of probe to illicit host reply. Must be one of.\nTCP: TCP SYN Probe\nICMP: Echo Probe\nUDP: UDP Probe (should be to closed port)"
 			)
 		;
 

@@ -40,6 +40,8 @@ void Prober::SetProbeType(string type) {
 		probeType = PROBE_TYPE_ICMP;
 	} else if (type == "TCP") {
 		probeType = PROBE_TYPE_TCP;
+	} else if (type == "UDP") {
+		probeType = PROBE_TYPE_UDP;
 	} else {
 		cout << "Invalid probe type '" << CI->m_probeType << "'" << endl;
 		exit(1);
@@ -53,6 +55,8 @@ void Prober::Probe() {
 		lastProbeSize = SendTCPProbe(CI->m_dstip, CI->m_dstmac, CI->m_srcip, CI->m_inputSrcMac, CI->m_dstport, CI->m_srcport);
 	} else if (probeType == PROBE_TYPE_ICMP) {
 		lastProbeSize = SendICMPProbe(CI->m_dstip, CI->m_dstmac, CI->m_srcip, CI->m_inputSrcMac);
+	} else if (probeType == PROBE_TYPE_UDP) {
+		lastProbeSize = SendUDPProbe(CI->m_dstip, CI->m_dstmac, CI->m_srcip, CI->m_inputSrcMac, CI->m_dstport, CI->m_srcport);
 	}
 	pthread_mutex_unlock(&cbLock);
 }
@@ -82,6 +86,33 @@ int Prober::SendTCPProbe(
 	eth_close(eth);
 
 	return ETH_HDR_LEN + IP_HDR_LEN + TCP_HDR_LEN;
+}
+
+
+int Prober::SendUDPProbe(
+		addr dstIP, addr dstMAC,
+		addr srcIP, addr srcMAC,
+		int dstPort, int srcPort)
+{
+	pthread_mutex_lock(&probeBufferLock);
+	eth_pack_hdr(probeBuffer, dstMAC.addr_eth, srcMAC.addr_eth, ETH_TYPE_IP);
+	ip_pack_hdr(probeBuffer + ETH_HDR_LEN, 0, IP_HDR_LEN + UDP_HDR_LEN, 0, 0, 128, IP_PROTO_UDP, srcIP.addr_ip, dstIP.addr_ip);
+	udp_pack_hdr(probeBuffer + ETH_HDR_LEN + IP_HDR_LEN, srcPort, dstPort, UDP_HDR_LEN);
+	ip_checksum(probeBuffer + ETH_HDR_LEN, IP_HDR_LEN + UDP_HDR_LEN);
+	pthread_mutex_unlock(&probeBufferLock);
+
+	eth_t *eth = eth_open(CI->m_interface.c_str());
+	if (eth == NULL) {
+		cout << "Unable to open ethernet interface to send probe" << endl;
+		return 0;
+	}
+
+	cout << ">> Sending UDP probe to " << addr_ntoa(&dstIP) << " / " << addr_ntoa(&dstMAC) << " from " << addr_ntoa(&srcIP) << " / " << addr_ntoa(&srcMAC) << endl;
+
+	eth_send(eth, probeBuffer, ETH_HDR_LEN + IP_HDR_LEN + UDP_HDR_LEN);
+	eth_close(eth);
+
+	return ETH_HDR_LEN + IP_HDR_LEN + UDP_HDR_LEN;
 }
 
 int Prober::SendICMPProbe(addr dstIP, addr dstMAC,addr srcIP, addr srcMAC) {
@@ -150,7 +181,7 @@ bool Prober::isThisProbeReply(const struct pcap_pkthdr *pkthdr, const unsigned c
 		if (ntohl(tcp->th_ack) != (lastTCPSequenceNumber + 1))
 			return false;
 
-	} else if (probeType == PROBE_TYPE_ICMP) {
+	} else if (probeType == PROBE_TYPE_UDP) {
 		if (ip->ip_p != IP_PROTO_ICMP)
 			return false;
 
@@ -159,9 +190,21 @@ bool Prober::isThisProbeReply(const struct pcap_pkthdr *pkthdr, const unsigned c
 
 		icmp_hdr *icmp = (icmp_hdr*)(packet + ETH_HDR_LEN + ipByteLength);
 
-		if (icmp->icmp_type != ICMP_ECHOREPLY)
+		if (icmp->icmp_type != ICMP_UNREACH)
 			return false;
 
+		if (icmp->icmp_code != ICMP_UNREACH_PORT)
+			return false;
+
+		return true;
+	} else if (probeType == PROBE_TYPE_ICMP) {
+		if (ip->ip_p != IP_PROTO_ICMP)
+			return false;
+
+		if (pkthdr->len < ETH_HDR_LEN + IP_HDR_LEN + ICMP_LEN_MIN)
+			return false;
+
+		icmp_hdr *icmp = (icmp_hdr*)(packet + ETH_HDR_LEN + ipByteLength);
 
 		icmp_msg_echo *echoReply = (icmp_msg_echo*)(packet + ETH_HDR_LEN + ipByteLength + ICMP_HDR_LEN);
 

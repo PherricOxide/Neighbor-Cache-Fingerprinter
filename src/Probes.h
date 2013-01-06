@@ -22,7 +22,8 @@
 
 enum ProbeType {
 	PROBE_TYPE_TCP,
-	PROBE_TYPE_ICMP
+	PROBE_TYPE_ICMP,
+	PROBE_TYPE_UDP
 };
 
 class Prober {
@@ -35,6 +36,11 @@ private:
 	pthread_mutex_t probeBufferLock;
 
 	int SendTCPProbe(
+				addr dstIP, addr dstMAC,
+				addr srcIP, addr srcMAC,
+				int dstPort, int srcPort);
+
+	int SendUDPProbe(
 			addr dstIP, addr dstMAC,
 			addr srcIP, addr srcMAC,
 			int dstPort, int srcPort);
