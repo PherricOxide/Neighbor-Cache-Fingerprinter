@@ -39,19 +39,19 @@ system network stack implementations that can be used for unique identification.
 	Traditional operating system fingerprinting tools such as Nmap and
 xprobe2 rely on creating fingerprints from higher level protocols such as TCP,
 UDP, and ICMP. The downside of these tools is that they usually require open TCP
-ports and responses to ICMP probes. The neighbor-fingerprint tool works by
+ports AND responses to ICMP probes. The neighbor-fingerprint tool works by
 sending a "Probe Packet", which is either a TCP SYN packet to a port that can be
-open OR closed, OR sending an ICMP Echo request to ellicit a reply. The target
-machine will either respond with a SYN/ACK, RST/ACK, or ICMP packet, but in any
-case it must first discover the MAC address to send the reply to via queries to
-the ARP Neighbor Cache. This allows for fingerprinting on target machines that
-have nothing but closed TCP ports and give no ICMP responses.
+open OR closed, OR sending a UDP packet to a cloned port, OR an ICMP Echo
+request to ellicit a reply. The target machine will either respond with a
+SYN/ACK, RST/ACK, or ICMP packet, but in any case it must first discover the MAC
+address to send the reply to via queries to the ARP Neighbor Cache. This allows
+for fingerprinting on target machines that have nothing but closed TCP ports and
+give no ICMP responses.
 
 	The main disadvantage of this tool versus traditional fingerprinting is
 that because it's based on a Layer 2 protocol instead of a Layer 3 protocol, the
 target machine that is being tested must reside on the same Ethernet broadcast
-domain (usually the same physical network). It also has the disadvantage of
-being fairly slow compared to other OS scanners (a scan can take ~5 minutes).
+domain (usually the same physical network).
 
 ==============================================================================
                             Tool Installation
