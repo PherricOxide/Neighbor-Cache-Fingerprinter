@@ -81,16 +81,16 @@ domain (usually the same physical network).
 
 	To run the standard Operating System scan on a host,
 
-		neighbor-fingerprint --dstip x.x.x.x --srcip x.x.x.x
+		neighbor-fingerprint --dstip x.x.x.x --spoofip x.x.x.x
 
 	IMPORTANT NOTE! 
-		The srcip field should be an IP address that is unused on your
+		The spoofip field should be an IP address that is unused on your
 	network. Several tests depend on the fact that this spoofed source IP
 	address is not already in the ARP cache of the machine being scanned.
 	If you know your network well, you can choose an IP address you know
 	is unused. If not, you'll need to use a tool like Nmap or arp-scan
 	to find an unused IP address to use. You'll also have to change the
-	srcip if you rerun the tool to ensure the most accurate results,
+	spoofip if you rerun the tool to ensure the most accurate results,
 	as some systems will keep the IP in their ARP cache for up to 20 minutes.
 
 	Note: The default fingerprint scan takes about 5 minutes.
