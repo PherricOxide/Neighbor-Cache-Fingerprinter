@@ -42,16 +42,16 @@ void Config::LoadArgs(char ** &argv, int &argc) {
 	po::options_description desc("Allowed options");
 	try {
 		string testString = "Test to run, \n";
-		testString += "0: Generate Fingerprint.\n";
-		testString += "The following are partial fingerprint tests for advanced users,\n";
-		testString += "1: Probe with no reply.\n";
-		testString += "2: Probe reply then check timeout.\n";
-		testString += "3: Check response to gratuitous ARP.\n";
-		testString += "4: Check response to different gratuitous ARP packet types.\n";
-		testString += "5: Check for ARP REPLY flood protection.\n";
-		testString += "6: Try to find exact ARP REPLY flood protection timing.\n";
-		testString += "7: Send gratuitous ARP and check if in table.\n";
-		testString += "8: Check behavior on RFC5227 ARP Probe.\n";
+		testString += "0: Generate Fingerprint\n";
+		testString += "The following are partial tests for advanced users,\n";
+		testString += "1: Probe with no reply\n";
+		testString += "2: Probe reply then check timeout\n";
+		testString += "3: Check gratuitous ARP response\n";
+		testString += "4: Check different gratuitous ARP packet types\n";
+		testString += "5: Check ARP REPLY flood protection\n";
+		testString += "6: Check exact flood protection timing\n";
+		testString += "7: Send gratuitous ARP, check if in table\n";
+		testString += "8: Check RFC5227 ARP Probe response\n";
 
 		desc.add_options()
 			("help,h", "produce help message")
@@ -60,12 +60,12 @@ void Config::LoadArgs(char ** &argv, int &argc) {
 				"Ethernet interface to use"
 			)
 
-			("srcip",
+			("spoofip,s",
 				po::value<std::string>(&m_srcipString)->required(),
 				"Source IP address"
 			)
 			
-			("dstip", 
+			("dstip,d",
 				po::value<std::string>(&m_dstipString)->required(),
 				"Destination IP address"
 			)
@@ -103,7 +103,6 @@ void Config::LoadArgs(char ** &argv, int &argc) {
 			("retries",
 					po::value<int>(&m_retries)->default_value(3),
 					"Depends on --test value"
-
 			)
 
 			("fingerprints",
@@ -126,15 +125,15 @@ void Config::LoadArgs(char ** &argv, int &argc) {
 		po::store(po::parse_command_line(argc, argv, desc), vm);
 
 		if (vm.count("help")) {
-			cout << "Usage: neighbor-fingerprint --dstip x.x.x.x --srcip x.x.x.x" << endl;
-			cout << "srcip should be an UNUSED IP address to spoof. It must not be in the ARP cache of the machine being targeted." << endl << endl;
+			cout << "Usage: neighbor-fingerprint --dstip x.x.x.x --spoofip x.x.x.x" << endl;
+			cout << "spoofip should be an UNUSED IP address to spoof. It must not be in the ARP cache of the machine being targeted." << endl << endl;
 			cout << desc << endl;
 			exit(1);
 		}
 		po::notify(vm);
 
-		addr_pton(vm["srcip"].as<string>().c_str(), &m_srcip);
-		addr_pton(vm["dstip"].as<string>().c_str(), &m_dstip);
+		addr_pton(m_srcipString.c_str(), &m_srcip);
+		addr_pton(m_dstipString.c_str(), &m_dstip);
 
 		if (vm.count("srcmac")) {
 			unsigned int d0,d1,d2,d3,d4,d5;
@@ -170,8 +169,9 @@ void Config::LoadArgs(char ** &argv, int &argc) {
 		}
 
 	} catch(exception &e) {
-		cout << "Uncaught exception: " << string(e.what()) << endl;
 		cout << endl << desc << endl;
+		cout << endl;
+		cout << "Uncaught exception: " << string(e.what()) << endl;
 		exit(1);
 	}
 }
