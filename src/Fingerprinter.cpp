@@ -127,6 +127,8 @@ bool compareFunction(pair<int, string> a, pair<int, string> b) {
 }
 
 std::string Fingerprinter::GetMatchReport(ArpFingerprint fingerprint) {
+	stringstream ss;
+
 	vector<pair<int, string> > results;
 	for(uint i = 0; i < m_fingerprints.size(); i++) {
 		int diff = CompareFingerprints(fingerprint, m_fingerprints[i]);
@@ -138,9 +140,16 @@ std::string Fingerprinter::GetMatchReport(ArpFingerprint fingerprint) {
 
 	sort(results.begin(), results.end(), compareFunction);
 
-	for (uint i = 0; i < results.size(); i++) {
-		cout << results[i].first << "\t\t" << results[i].second << endl;
+	int resultsToPrint = 5;
+	if (CI->m_verbose) {
+		resultsToPrint = results.size();
 	}
 
-	return "";
+
+	ss << "Top " << resultsToPrint << " fingerprint matches follow, best matches first. A match score of 0 is an identical match." << endl;
+	for (uint i = 0; i < resultsToPrint; i++) {
+		ss << results[i].first << "\t\t" << results[i].second << endl;
+	}
+
+	return ss.str();
 }

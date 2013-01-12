@@ -590,13 +590,7 @@ void checkIsIpUsedResponse() {
 	sleep(2);
 
 	pthread_mutex_lock(&cbLock);
-	cout << "Response follows," << endl;
 	if (response.sawArpReply) {
-		cout << "spa: " << addr_ntoa(&response.spa) << endl;
-		cout << "sha: " << addr_ntoa(&response.sha) << endl;
-		cout << "tpa: " << addr_ntoa(&response.tpa) << endl;
-		cout << "tha: " << addr_ntoa(&response.tha) << endl;
-
 		if (addr_cmp(&response.tpa, &zeroIP) == 0) {
 			fingerprint.correctARPProbeResponse  = true;
 		} else {
@@ -627,7 +621,6 @@ int main(int argc, char ** argv)
 	unsigned char broadcastBuffer[ETH_ADDR_LEN] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 	addr_pack_eth(&broadcastMAC, (uint8_t*)broadcastBuffer);
 
-	// Random note: 192.168.0.2 = ntohl(0xc0a80002);
 	uint32_t bcastNumber = ~0;
 	addr_pack_ip(&broadcastIP, (uint8_t*)&bcastNumber);
 
@@ -709,13 +702,14 @@ int main(int argc, char ** argv)
 		checkIsIpUsedResponse();
 
 		cout << endl;
-		cout << fingerprint.toString() << endl << endl;
+		cout << "#FINGERPRINT STRING BEGINS" << endl;
+		cout << fingerprint.toString() << endl;
+		cout << "#FINGERPRINT STRING ENDS" << endl << endl;
 
-		cout << "FINGERPRINT BEGINS" << endl;
+		cout << "#FINGERPRINT BEGINS" << endl;
 		cout << fingerprint.toTinyString() << endl;
-		cout << "FINGERPRINT ENDS" << endl << endl;
+		cout << "#FINGERPRINT ENDS" << endl << endl;
 
-		cout << "Fingerprint matches follow (best matches being first)" << endl;
 		cout << fingerprinter.GetMatchReport(fingerprint) << endl;
 	}
 

@@ -35,6 +35,7 @@ public:
 	std::string m_interface;
 
 	int m_test;
+	bool m_verbose;
 
 	std::string m_srcipString, m_dstipString;
 	std::string m_fingerprintFile;

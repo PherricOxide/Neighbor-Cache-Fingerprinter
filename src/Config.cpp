@@ -54,7 +54,8 @@ void Config::LoadArgs(char ** &argv, int &argc) {
 		testString += "8: Check RFC5227 ARP Probe response\n";
 
 		desc.add_options()
-			("help,h", "produce help message")
+			("help,h", "Produce help message")
+			("verbose,h", "Enable verbose/debug messages")
 			("interface,i", 
 				po::value<std::string>(&m_interface)->default_value("eth0"),
 				"Ethernet interface to use"
@@ -123,6 +124,12 @@ void Config::LoadArgs(char ** &argv, int &argc) {
 
 		po::variables_map vm;
 		po::store(po::parse_command_line(argc, argv, desc), vm);
+
+		if (vm.count("verbose")) {
+			m_verbose = true;
+		} else {
+			m_verbose = false;
+		}
 
 		if (vm.count("help")) {
 			cout << "Usage: neighbor-fingerprint --dstip x.x.x.x --spoofip x.x.x.x" << endl;

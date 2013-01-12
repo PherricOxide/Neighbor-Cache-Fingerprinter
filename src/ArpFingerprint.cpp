@@ -103,8 +103,6 @@ string ArpFingerprint::toString() {
 		}
 	}
 
-	ss << endl;
-
 	return ss.str();
 }
 
