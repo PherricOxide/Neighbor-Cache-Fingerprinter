@@ -20,16 +20,6 @@
 WARNING: This research project still under development. Check back later for a
 more usable prototype.
 
-	What is the Neighbor Cache? The Neighbor Cache is an operating system's
-mapping of network addresses to link layer addresses maintained and updated via
-the protocol ARP (Address Resolution Protocol) in IPv4 or NDP (Neighbor
-Discovery Protocol) in IPv6. The Neighbor Cache can be as simple as a lookup
-table updated every time an ARP or NDP reply is seen, to something as complex as
-a cache that has multiple timeout values for each entry, which are updated based
-on positive feedback from higher level protocols and usage characteristics of
-that entry by the operating system's applications, along with restrictions on
-malformed or unsolicited update packets.
-
 	This tool provides a mechanism for remote operating system detection by
 extrapolating characteristics of the target system's underlying Neighbor Cache
 and general ARP behavior.  Given the non-existence of any standard specification
@@ -47,6 +37,16 @@ SYN/ACK, RST/ACK, or ICMP packet, but in any case it must first discover the MAC
 address to send the reply to via queries to the ARP Neighbor Cache. This allows
 for fingerprinting on target machines that have nothing but closed TCP ports and
 give no ICMP responses.
+	
+	What is the Neighbor Cache? The Neighbor Cache is an operating system's
+mapping of network addresses to link layer addresses maintained and updated via
+the protocol ARP (Address Resolution Protocol) in IPv4 or NDP (Neighbor
+Discovery Protocol) in IPv6. The Neighbor Cache can be as simple as a lookup
+table updated every time an ARP or NDP reply is seen, to something as complex as
+a cache that has multiple timeout values for each entry, which are updated based
+on positive feedback from higher level protocols and usage characteristics of
+that entry by the operating system's applications, along with restrictions on
+malformed or unsolicited update packets.
 
 	The main disadvantage of this tool versus traditional fingerprinting is
 that because it's based on a Layer 2 protocol instead of a Layer 3 protocol, the
