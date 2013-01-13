@@ -17,9 +17,6 @@
                                Introduction
 ==============================================================================
 
-WARNING: This research project still under development. Check back later for a
-more usable prototype.
-
 	This tool provides a mechanism for remote operating system detection by
 extrapolating characteristics of the target system's underlying Neighbor Cache
 and general ARP behavior.  Given the non-existence of any standard specification
