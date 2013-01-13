@@ -64,3 +64,20 @@ Wind River VxWorks
 
 Honeyd Honeypot
 0 2 500205 500205 1 60 1 0 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+
+Scientific Atlanta DPC2100 Cable Modem
+1 1 -1 0 1 60 1 0 1 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+
+Terayon TJ715 Cable Modem
+0 1 -1 0 1 60 1 0 1 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 
+
+SMC Barricade Broadband Router 
+0 0 -1 0 1 60 1 0 1 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+
+# Timing values between 36-60, should really make that fingerprint field a range
+MontaVista embedded Linux 2.4.17 (fingerprint on Actiontec GT701 DSL modem/router)
+3 3 991839 1001330 1 45 1 0 1 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+
+MontaVista embedded Linux 2.4.17 (fingerprint on Actiontec GT701 DSL modem/router)
+3 3 990969 1001298 1 36 1 1 1 0 0 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 
+

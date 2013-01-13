@@ -91,7 +91,7 @@ string ArpFingerprint::toString() {
 	ss << "Replied before updating stale entry        : " << boolalpha << replyBeforeUpdate << endl;
 	ss << "Got unicast (vs bcast) update request      : " << boolalpha << unicastUpdate << endl;
 	ss << "Unsolicited reply creates cache entry      : " << boolalpha << gratuitousReplyAddsCacheEntry << endl;
-	ss << "Target ignores rapid successive replies    : " << boolalpha << hasFloodProtection << endl;
+	ss << "Detected ARP Reply flood protection        : " << boolalpha << hasFloodProtection << endl;
 	ss << "Correctly responds to RFC5227 ARP Probe    : " << boolalpha << correctARPProbeResponse << endl;
 
 	ss << "Gratuitous probes result fingerprint       : ";

@@ -538,8 +538,12 @@ void checkForFloodProtection() {
 		cout << "Reply was to " << addr_ntoa(&response.dstMac) << endl;
 		cout << "count was " << response.dstMac.__addr_u.__eth.data[5] - start << endl;
 
-		if (response.dstMac.__addr_u.__eth.data[5] - start == 0) {
-			cout << "ERROR: None of the replies were accepted into the cache! Can not determine result for this test." << endl;
+		// Chance that it's still replying to the first MAC it ever saw,
+		if (response.dstMac.__addr_u.__eth.data[5] - origSrcMac.__addr_u.__eth.data[5] == 0) {
+			cout << "WARNING: None of the replies were accepted into the cache! Can not determine result for this test." << endl;
+			fingerprint.hasFloodProtection = false;
+		} else if (response.dstMac.__addr_u.__eth.data[5] - start == 0) {
+			cout << "WARNING: None of the replies were accepted into the cache! Can not determine result for this test." << endl;
 			fingerprint.hasFloodProtection = false;
 		} else if (response.dstMac.__addr_u.__eth.data[5] - start == 1) {
 			fingerprint.hasFloodProtection = true;
