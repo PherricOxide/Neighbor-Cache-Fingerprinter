@@ -3,7 +3,7 @@
 
 AC_PREREQ([2.68])
 AC_INIT([FULL-PACKAGE-NAME], [VERSION], [BUG-REPORT-ADDRESS])
-AM_INIT_AUTOMAKE(pippo, 2.6)
+AM_INIT_AUTOMAKE(neighbor-fingerprint, 0.1)
 AC_CONFIG_SRCDIR([src])
 
 # Checks for programs.
