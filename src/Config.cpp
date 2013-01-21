@@ -18,6 +18,7 @@
 #include "Config.h"
 #include <string.h>
 #include <stdio.h>
+#include <iostream>
 
 #include <boost/program_options.hpp>
 
